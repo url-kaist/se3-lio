@@ -1,0 +1,31 @@
+imu_topic: "/imu"
+lidar_topic: "/MID_UP"
+
+sensors:
+  imu:
+    acc_cov: 0.1
+    gyr_cov: 0.1
+    b_acc_cov: 0.0001
+    b_gyr_cov: 0.0001
+
+  lidar:
+    min_range: 0.25
+    max_range: 100000
+    ranging_covs: [0.02, 0.02]
+    angle_covs: [0.15, 0.15]
+
+  # [quat : w, x, y, z]
+  t_exts: [-0.011, -0.02329, 0.04412]
+  q_exts: [0.99995, 0.0, 0.0, -0.00999]
+
+downsample:
+  resolution: 0.5
+
+max_iter: 4
+
+voxel_map:
+  resolution: 1.0
+  max_layer: 2
+  layer_size: [5, 5, 5, 5, 5]
+  max_point_size: 1000
+  plane_threshold: 0.01
