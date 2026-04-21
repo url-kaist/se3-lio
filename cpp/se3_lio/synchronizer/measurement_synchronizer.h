@@ -19,7 +19,6 @@ public:
 
     void addIMU(const IMU &_imu);
     void addLiDAR(const LiDAR &_lidar);
-    void addGPS(const GPS &_gps);
 
     MeasurementPtr getSyncedMeasurement();
 
@@ -35,7 +34,6 @@ private:
 
     std::deque<IMU> imu_queue_;
     std::deque<LiDAR> lidar_queue_;
-    std::deque<GPS> gps_queue_;
 
     std::deque<Measurement> synced_queue_;
 
@@ -45,8 +43,6 @@ private:
     double last_imu_time_ = 0.0;
 
     void synchronizeIMULiDAR();
-    void synchronizeIMULiDARGPS();
-    void synchronizeIMULiDARGPS_v2();
 };
 
 }  // namespace se3_lio::synchronizer

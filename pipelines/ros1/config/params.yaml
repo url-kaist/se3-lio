@@ -1,5 +1,5 @@
-imu_topic: "/imu"
-lidar_topic: "/MID_UP"
+imu_topic: "/imu/imu"
+lidar_topic: "/os1_cloud_node1/points"
 
 sensors:
   imu:
@@ -10,9 +10,8 @@ sensors:
 
   lidar:
     min_range: 0.25
-    max_range: 100000
-    ranging_covs: [0.02, 0.02]
-    angle_covs: [0.15, 0.15]
+    range_cov: 0.02
+    angle_cov: 0.15
 
   # [quat : w, x, y, z]
   t_exts: [-0.011, -0.02329, 0.04412]
