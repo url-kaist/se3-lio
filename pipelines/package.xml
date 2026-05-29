@@ -8,14 +8,9 @@
     <maintainer email="gunhee_shin@kaist.ac.kr">Gunhee Shin</maintainer>
     <author email="gunhee_shin@kaist.ac.kr">Gunhee Shin</author>
 
-    <license>MIT</license>
+    <license>GPL-2.0</license>
 
     <!-- Dependencies -->
     <buildtool_depend>catkin</buildtool_depend>
-    <buildtool_depend>ament_cmake</buildtool_depend>
-
-    <export>
-        <build_type condition="$ROS_VERSION == 2">ament_cmake</build_type>
-    </export>
 
 </package>

@@ -1,3 +1,9 @@
+// SPDX-License-Identifier: GPL-2.0-only
+//
+// Adapted from HKU-MARS VoxelMap (https://github.com/hku-mars/VoxelMap),
+// Copyright (C) the VoxelMap authors, licensed under GPL-2.0.
+// This file inherits the GPL-2.0 license of its origin.
+
 #ifndef VOXEL_MAP_UTIL_HPP
 #define VOXEL_MAP_UTIL_HPP
 // #include "common_lib.hpp"

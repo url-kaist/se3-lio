@@ -7,27 +7,17 @@ ENV DEBIAN_FRONTEND=noninteractive \
     ROS_DISTRO=noetic
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    software-properties-common curl gnupg2 lsb-release build-essential \
-    python3-pip python3-dev python3-venv \
-    && add-apt-repository ppa:deadsnakes/ppa -y \
-    && python3 -m pip install --no-cache-dir --upgrade pip setuptools \
-    && pip3 install --no-cache-dir torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu118 \
+    curl gnupg2 lsb-release build-essential git cmake \
+    python3-pip python3-dev \
     && sh -c 'echo "deb http://packages.ros.org/ros/ubuntu $(lsb_release -sc) main" > /etc/apt/sources.list.d/ros-latest.list' \
     && curl -s https://raw.githubusercontent.com/ros/rosdistro/master/ros.asc | apt-key add - \
-    && apt-get update && apt-get install -y ros-noetic-desktop-full \
+    && apt-get update && apt-get install -y --no-install-recommends \
+    ros-noetic-desktop ros-noetic-pcl-ros \
     python3-rosdep python3-rosinstall python3-rosinstall-generator python3-wstool python3-catkin-tools \
     && rosdep init && rosdep update \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
 
 SHELL ["/bin/bash", "-c"]
-
-RUN mkdir -p /ws/standalone && cd /ws/standalone \
-    && git clone https://github.com/MIT-SPARK/TEASER-plusplus.git \
-    && cd TEASER-plusplus && mkdir build && cd build \
-    && cmake .. -DENABLE_DIAGNOSTIC_PRINT=OFF -DBUILD_PYTHON_BINDINGS=OFF && make install -j$(($(nproc)-1)) \
-    && cd /ws/standalone && git clone https://github.com/borglab/gtsam.git \
-    && cd gtsam && git checkout release/4.2 && mkdir build && cd build \
-    && cmake .. -DGTSAM_USE_SYSTEM_EIGEN=True && make -j$(($(nproc)-1)) && make install && cd /ws/standalone && rm -rf TEASER-plusplus gtsam
 
 RUN git clone https://github.com/Livox-SDK/Livox-SDK2.git \
     && cd Livox-SDK2 && mkdir build && cd build && cmake .. && make -j$(($(nproc)-1)) && make install

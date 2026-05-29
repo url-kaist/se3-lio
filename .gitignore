@@ -1,0 +1,11 @@
+# build artifacts
+build/
+install/
+devel/
+log/
+logs/
+
+# internal (not for public release)
+.claude/
+CLAUDE.md
+docs/
