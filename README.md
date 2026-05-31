@@ -15,9 +15,6 @@
 
 ______________________________________________________________________
 
-> 🚧 This repository is under active construction. The ROS1 pipeline builds and
-> runs; datasets, example configs, and a project page are on the way.
-
 ## :open_file_folder: Layout
 
 SE(3)-LIO is a ROS1 node built on a ROS-agnostic C++ core:
@@ -72,6 +69,15 @@ Swap in a dataset-specific yaml by editing the `<rosparam … file=…/>` line i
 | `downsample` | `resolution` | input downsample voxel size (m) |
 | | `max_iter` | max iterations per update |
 | `voxel_map` | `resolution`, `max_layer`, `layer_size`, `max_point_size`, `plane_threshold` | voxel map structure and plane fitting |
+
+______________________________________________________________________
+
+## :construction: Roadmap
+
+- [ ] ROS2 (Humble) support
+- [ ] Python bindings / PyPI package
+- [ ] More dataset configs and example launches
+- [ ] Continuous integration (build checks)
 
 ______________________________________________________________________
 
