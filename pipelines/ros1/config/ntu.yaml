@@ -18,9 +18,9 @@ sensors:
   q_exts: [0.99995, 0.0, 0.0, -0.00999]
 
 downsample:
-  resolution: 0.5
+  resolution: 0.25
 
-max_iter: 4
+max_iter: 3
 
 voxel_map:
   resolution: 1.0

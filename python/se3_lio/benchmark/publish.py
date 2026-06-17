@@ -14,10 +14,11 @@ import yaml
 from se3_lio.benchmark.run import _apply_overrides
 
 
-def publish(best_path, out_path):
+def publish(best_path, out_path, base_params=None):
     with open(best_path) as f:
         best = yaml.safe_load(f)
-    with open(best["base_params"]) as f:
+    base = base_params or best["base_params"]
+    with open(base) as f:
         raw = yaml.safe_load(f)
     merged = _apply_overrides(raw, best.get("overrides", {}))
     Path(out_path).parent.mkdir(parents=True, exist_ok=True)
@@ -33,10 +34,12 @@ def main(argv=None):
                     help="best.yaml (default benchmark/results/<dataset>/best.yaml)")
     ap.add_argument("--out", default=None,
                     help="output yaml (default benchmark/results/<dataset>/<dataset>_tuned.yaml)")
+    ap.add_argument("--base", default=None,
+                    help="base params yaml to apply overrides onto (default: best.yaml's base_params)")
     args = ap.parse_args(argv)
     best_path = args.best or f"benchmark/results/{args.dataset}/best.yaml"
     out_path = args.out or f"benchmark/results/{args.dataset}/{args.dataset}_tuned.yaml"
-    publish(best_path, out_path)
+    publish(best_path, out_path, args.base)
     print(f"published {best_path} -> {out_path}")
 
 

@@ -1,0 +1,13 @@
+# Suite sweep template (grid search across MULTIPLE bags). Copy to
+# benchmark/sweeps/ntu_suite.yaml (private). Each combo is run over every bag in
+# `datasets` and scored by the mean of per-bag ATE RMSE, so the winner is the
+# parameter set that is generally best across all bags (not overfit to one).
+#
+#   python -m se3_lio.benchmark.run ntu_suite
+#
+# `datasets` are keys in benchmark/datasets.yaml. Omit `datasets` to sweep a
+# single bag (then the target name is itself the dataset key).
+datasets: [eee_01, nya_01, rtp_01, sbs_01, spms_01, tnp_01]
+grid:
+  downsample.resolution: [0.25, 0.5]
+  max_iter: [3, 4]
