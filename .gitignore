@@ -9,3 +9,6 @@ logs/
 .claude/
 CLAUDE.md
 docs/
+
+# maintainer-local run scripts (real host paths)
+run_docker_local.sh

@@ -2,6 +2,7 @@
     <h1>SE(3)-LIO</h1>
     <img src="https://img.shields.io/badge/-C++-blue?logo=cplusplus" />
     <img src="https://img.shields.io/badge/ROS1-Noetic-blue" />
+    <img src="https://img.shields.io/badge/ROS2-Humble-blue" />
     <img src="https://img.shields.io/badge/Ubuntu-E95420?logo=ubuntu&logoColor=white" />
     <img src="https://img.shields.io/badge/License-GPL--2.0-green" />
     <br />
@@ -17,48 +18,127 @@ ______________________________________________________________________
 
 ## :open_file_folder: Layout
 
-SE(3)-LIO is a ROS1 node built on a ROS-agnostic C++ core:
+SE(3)-LIO ships as ROS1 and ROS2 nodes built on a shared ROS-agnostic C++ core:
 
 - `cpp/se3_lio/` — ROS-agnostic C++ core (state estimation, map management, pipeline)
 - `pipelines/ros1/` — ROS1 (Noetic, catkin) node, launch, config, rviz
-- `docker/ros1/` — Docker setup for building and running
+- `pipelines/ros2/` — ROS2 (Humble, ament/colcon) node, launch, config, rviz
+- `docker/ros1/`, `docker/ros2/` — Docker setup for building and running each
 
 ______________________________________________________________________
 
-## :package: Build
+## :package: Build & Run
 
-All build and run steps run **inside Docker**. On the host you only build the
+All build and run steps run **inside Docker** — on the host you only build the
 image and drop into the container.
+
+<details>
+<summary><b>ROS 1 (Noetic)</b></summary>
+
+### Build
 
 ```bash
 # host
-bash docker/ros1/build_docker.sh          # builds se3_lio:ros1
-bash docker/ros1/run_docker.sh      # drops into /ws inside the container
+bash docker/ros1/build_docker.sh     # builds se3_lio:ros1
+bash docker/ros1/run_docker.sh       # drops into /ws inside the container
 
 # inside the container
 cd /ws
-catkin build se3_lio
+catkin build se3_lio                 # default ouster; -DLIDAR_TYPE=livox|hesai to switch
 source devel/setup.bash
 ```
 
-______________________________________________________________________
+The LiDAR input type is a **build option** — pass
+`--cmake-args -DLIDAR_TYPE=ouster|hesai|livox` (default `ouster`). No source edits
+needed; `ouster`/`hesai` use `PointCloud2`, `livox` uses Livox `CustomMsg`.
 
-## :rocket: Run
+### Run
 
 ```bash
-# replaying a rosbag
 roslaunch se3_lio run_se3lio_ntu.launch use_sim_time:=true
 rosbag play --clock <data.bag>
 ```
 
 `use_sim_time:=true` makes the node follow the bag clock (`rosbag play --clock`
 publishes `/clock`). For live sensors, omit it — the default is `false`.
+Config lives in [pipelines/ros1/config/ntu.yaml](pipelines/ros1/config/ntu.yaml);
+swap datasets by editing the `<rosparam … file=…/>` line in the launch file.
 
-### Configuration
+</details>
 
-Parameters live in [pipelines/ros1/config/ntu.yaml](pipelines/ros1/config/ntu.yaml).
-Swap in a dataset-specific yaml by editing the `<rosparam … file=…/>` line in
-[pipelines/ros1/launch/run_se3lio_ntu.launch](pipelines/ros1/launch/run_se3lio_ntu.launch).
+<details>
+<summary><b>ROS 2 (Humble)</b></summary>
+
+### Build
+
+```bash
+# host
+bash docker/ros2/build_docker.sh     # builds se3_lio:ros2
+bash docker/ros2/run_docker.sh       # drops into /ws inside the container
+
+# inside the container
+cd /ws
+colcon build --symlink-install --packages-select se3_lio   # default livox
+source install/setup.bash
+```
+
+The LiDAR input type is a **build option** — pass
+`--cmake-args -DLIDAR_TYPE=ouster|livox` (default `livox`). No source edits needed;
+`ouster` uses `PointCloud2`, `livox` uses Livox `CustomMsg`.
+
+### Run
+
+```bash
+ros2 launch se3_lio run.launch.py    # add rviz:=true for visualization
+ros2 bag play <rosbag2_dir>
+```
+
+Config lives in [pipelines/ros2/config/params.yaml](pipelines/ros2/config/params.yaml)
+(edit `imu_topic` / `lidar_topic` / extrinsics for your sensor rig).
+
+</details>
+
+<details>
+<summary><b>Python bindings (pybind11)</b></summary>
+
+The core is exposed to Python via pybind11 ([python/](python/)). It links the C++
+core (PCL, Eigen, Sophus, OpenMP), so build it **inside the ROS2 Docker image**.
+
+### Build
+
+```bash
+# inside the se3_lio:ros2 container
+pip install pybind11 scikit-build-core pydantic
+pip install --no-build-isolation ./python/      # self-contained wheel ($ORIGIN RPATH)
+pytest python/tests/
+```
+
+### Use
+
+```python
+from se3_lio import SE3LIO, SE3LIOConfig, load_node_params
+
+p = load_node_params("pipelines/ros2/config/params.yaml")   # same mapping as the node
+odom = SE3LIO(p["config"], p["extrinsic"])
+
+# points (N,3) · point_times (N,) offsets [s] · imu (M,7) [t,ax,ay,az,gx,gy,gz]
+state = odom.register_frame(points, point_times, imu, frame_stamp)
+print(state.pose, state.vel, state.covariance)
+```
+
+`register_frame` reproduces the node's per-frame data path (build measurement →
+apply extrinsic → sort by timestamp → `estimatePose`). Verified against the live
+node on a Livox sequence: 300 frames, exact timestamps, **ATE 3.2 mm / 0.03°**.
+See [python/README.md](python/README.md) and the harness in [python/verify/](python/verify/).
+
+</details>
+
+______________________________________________________________________
+
+## :gear: Configuration
+
+The same parameter groups apply to both ROS1 and ROS2 (in their respective
+`config/` yaml):
 
 | Group | Key | Meaning |
 |-------|-----|---------|
@@ -74,8 +154,8 @@ ______________________________________________________________________
 
 ## :construction: Roadmap
 
-- [ ] ROS2 (Humble) support
-- [ ] Python bindings / PyPI package
+- [x] ROS2 (Humble) support
+- [x] Python bindings (pybind11) — core binding verified vs node (ATE 3.2 mm); PyPI distribution pending
 - [ ] More dataset configs and example launches
 - [ ] Continuous integration (build checks)
 

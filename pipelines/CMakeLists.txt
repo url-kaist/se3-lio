@@ -17,6 +17,11 @@ if (DEFINED CATKIN_DEVEL_PREFIX)
     message(STATUS "ROS1 build")
     add_subdirectory(ros1)
 
+# ROS 2 (colcon build)
+elseif (DEFINED ENV{AMENT_PREFIX_PATH})
+    message(STATUS "ROS2 build")
+    add_subdirectory(ros2)
+
 # C++ (cmake .. && make)
 else()
     message(STATUS "C++ build")

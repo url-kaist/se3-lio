@@ -14,6 +14,20 @@ find_package(catkin REQUIRED COMPONENTS
 find_package(PCL REQUIRED)
 catkin_package()
 
+# LiDAR input type — selected at build time, no source edits:
+#   catkin build se3_lio --cmake-args -DLIDAR_TYPE=livox
+set(LIDAR_TYPE "ouster" CACHE STRING "LiDAR input type: ouster | hesai | livox")
+if(LIDAR_TYPE STREQUAL "livox")
+    add_compile_definitions(LIDAR_LIVOX)
+elseif(LIDAR_TYPE STREQUAL "hesai")
+    add_compile_definitions(LIDAR_HESAI)
+elseif(LIDAR_TYPE STREQUAL "ouster")
+    add_compile_definitions(LIDAR_OUSTER)
+else()
+    message(FATAL_ERROR "Unknown LIDAR_TYPE '${LIDAR_TYPE}' (expected: ouster | hesai | livox)")
+endif()
+message(STATUS "SE3-LIO LiDAR input type: ${LIDAR_TYPE}")
+
 set(SE3_LIO_CPP_INSTALL_DIR ${PROJECT_SOURCE_DIR}/../cpp/se3_lio/install)
 set(SE3_LIO_CPP_DIR ${PROJECT_SOURCE_DIR}/../cpp/se3_lio)
 if(EXISTS ${SE3_LIO_CPP_INSTALL_DIR})

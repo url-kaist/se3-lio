@@ -127,9 +127,13 @@ void LioNode::pushAllROSMessages() {
     }
 
     while (!lidar_queue_.empty()) {
-        // LiDAR lidar = convertLivoxMessage(lidar_queue_.front(), lidar_min_range_);
+#if defined(LIDAR_LIVOX)
+        LiDAR lidar = convertLivoxMessage(lidar_queue_.front(), lidar_min_range_);
+#elif defined(LIDAR_HESAI)
+        LiDAR lidar = convertHesaiMessage(lidar_queue_.front(), lidar_min_range_);
+#else  // LIDAR_OUSTER
         LiDAR lidar = convertOusterMessage(lidar_queue_.front(), lidar_min_range_);
-        // LiDAR lidar = convertHesaiMessage(lidar_queue_.front(), lidar_min_range_);
+#endif
         synchronizer_.addLiDAR(lidar);
         lidar_queue_.pop();
     }

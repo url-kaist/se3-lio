@@ -26,8 +26,13 @@
 namespace se3_lio::ros1_node {
 
 using IMU_MSG_TYPE = sensor_msgs::Imu::ConstPtr;
+
+// LiDAR input type is selected at build time via CMake (-DLIDAR_TYPE=ouster|hesai|livox).
+#if defined(LIDAR_LIVOX)
+using LIDAR_MSG_TYPE = livox_ros_driver2::CustomMsg::ConstPtr;
+#else  // LIDAR_OUSTER / LIDAR_HESAI (both sensor_msgs::PointCloud2)
 using LIDAR_MSG_TYPE = sensor_msgs::PointCloud2::ConstPtr;
-// using LIDAR_MSG_TYPE = livox_ros_driver2::CustomMsg::ConstPtr;
+#endif
 
 class LioNode {
 public:
