@@ -79,6 +79,29 @@ pipeline.save_tum("traj.tum")
 print(pipeline.summary())
 ```
 
+## Visualization (Rerun)
+
+Both `se3_lio_pipeline` and `verify/run_offline.py` accept `--rerun-save <path.rrd>`
+(and `--rerun-spawn` to open the viewer live). Per frame the estimated pose, the
+scan transformed into the world frame, and the trajectory are logged; Rerun
+accumulates the world scans across the timeline, so playing it back shows the map
+being built.
+
+```bash
+pip install -e ./python/[viz]          # adds rerun-sdk
+se3_lio_pipeline eee_01.bag --params pipelines/ros1/config/ntu.yaml \
+    --max-frames 2500 --output results/ --rerun-save results/eee_01.rrd
+rerun results/eee_01.rrd               # open the recording (match the rerun-sdk version)
+```
+
+The logger lives in [se3_lio/viz/rerun_logger.py](se3_lio/viz/rerun_logger.py)
+(`lidar_to_world`, `RerunLogger`, `read_rrd_trajectory`). A verification harness
+covers it: `tests/test_rerun_viz.py` (G1 transform math, G2 `.rrd` round-trip,
+both runnable without the binding) and `verify/check_rerun.py` (G3 — the `.rrd`
+trajectory matches the TUM output). Current logging uses the raw input scan;
+logging the undistorted + downsampled cloud needs exposing it from the core
+(planned next).
+
 ### Raw binding
 
 The `_`-prefixed names (`se3_lio_pybind._SE3LIO`, `_SE3LIOConfig`, `_State`) are

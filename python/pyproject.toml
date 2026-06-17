@@ -23,6 +23,9 @@ se3_lio_pipeline = "se3_lio.tools.cmd:run"
 test = [
     "pytest",
 ]
+viz = [
+    "rerun-sdk>=0.20",
+]
 
 [tool.scikit-build]
 build-dir = "build/{wheel_tag}"

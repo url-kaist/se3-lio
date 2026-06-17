@@ -31,7 +31,7 @@ class OdometryPipeline:
         self.stamps = []
         self.poses = []  # list of 4x4
 
-    def run(self, progress=True):
+    def run(self, progress=True, logger=None):
         frames = self.dataset
         if progress:
             try:
@@ -47,6 +47,8 @@ class OdometryPipeline:
             )
             self.stamps.append(state.stamp)
             self.poses.append(np.array(state.pose))
+            if logger is not None:
+                logger.log_frame(state.stamp, self.poses[-1], frame.points)
         return self
 
     def save_tum(self, path):

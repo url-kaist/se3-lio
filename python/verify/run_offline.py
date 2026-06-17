@@ -20,6 +20,8 @@ def main():
     ap.add_argument("--params", required=True)
     ap.add_argument("--max-frames", type=int, default=300)
     ap.add_argument("--out", required=True)
+    ap.add_argument("--rerun-save", help="write a Rerun .rrd recording to this path")
+    ap.add_argument("--rerun-spawn", action="store_true", help="open the Rerun viewer live")
     args = ap.parse_args()
 
     cfg = load_node_params(args.params)
@@ -35,6 +37,12 @@ def main():
     frames = bag_reader.synchronize(imus, scans, args.max_frames)
     print(f"synchronized {len(frames)} frames")
 
+    logger = None
+    if args.rerun_save or args.rerun_spawn:
+        from se3_lio.viz import RerunLogger
+
+        logger = RerunLogger(cfg["extrinsic"])
+
     odom = SE3LIO(cfg["config"], cfg["extrinsic"])
     stamps, poses = [], []
     t0 = time.time()
@@ -44,6 +52,8 @@ def main():
         )
         stamps.append(state.stamp)
         poses.append(np.array(state.pose))
+        if logger is not None:
+            logger.log_frame(state.stamp, poses[-1], scan["pts"])
         if (i + 1) % 50 == 0:
             print(f"  frame {i + 1}/{len(frames)}  stamp={state.stamp:.3f}  "
                   f"pos={poses[-1][:3, 3]}  inliers={state.num_inliers}")
@@ -51,6 +61,12 @@ def main():
 
     tum.write(args.out, stamps, poses)
     print(f"wrote {args.out}")
+
+    if logger is not None and args.rerun_save:
+        logger.save(args.rerun_save)
+        print(f"wrote {args.rerun_save}")
+    if logger is not None and args.rerun_spawn:
+        logger.spawn()
 
 
 if __name__ == "__main__":

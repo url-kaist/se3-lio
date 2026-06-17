@@ -5,6 +5,10 @@ devel/
 log/
 logs/
 
+# visualization / run outputs (large, not for VCS)
+results/
+*.rrd
+
 # internal (not for public release)
 .claude/
 CLAUDE.md

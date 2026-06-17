@@ -1,0 +1,7 @@
+# Sweep template (grid search). Copy to benchmark/sweeps/ntu.yaml (private).
+# Dotted keys match the params.yaml structure read by load_node_params, e.g.
+# downsample.resolution, max_iter, voxel_map.resolution, voxel_map.plane_threshold.
+# Each combo is the cartesian product of the listed values.
+grid:
+  downsample.resolution: [0.25, 0.5]
+  max_iter: [3, 4]

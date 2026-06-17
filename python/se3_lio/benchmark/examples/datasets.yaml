@@ -1,0 +1,14 @@
+# Dataset registry template. Copy to benchmark/datasets.yaml (private, gitignored)
+# and fill in real paths. Each top-level key is a dataset selectable on the CLI:
+#   python -m se3_lio.benchmark.run ntu --config benchmark/datasets.yaml
+#
+# base_params points at a node params.yaml; its imu_topic/lidar_topic/min_range
+# are used unless overridden here. max_frames null = use the whole bag.
+ntu:
+  bag: /path/to/eee_01.bag
+  input_type: ros1-ouster
+  base_params: pipelines/ros1/config/ntu.yaml
+  imu_topic: /imu/imu
+  lidar_topic: /os1_cloud_node/points
+  gt_tum: /path/to/eee_01_gt.tum
+  max_frames: null
