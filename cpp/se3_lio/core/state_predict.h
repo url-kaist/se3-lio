@@ -34,6 +34,8 @@ public:
 
     void setLiDARNoise(double _range_noise, double _angle_noise);
 
+    void setVerbose(bool _verbose) { verbose_ = _verbose; }
+
     /**
      * @brief Set the State
      *
@@ -124,6 +126,8 @@ private:
     std::vector<MeasCovMatrix> F_w_forward_vec_;
     std::vector<CovMatrix> F_x_backward_vec_;
     std::vector<MeasCovMatrix> F_w_backward_vec_;
+
+    bool verbose_ = false;
 
     int imu_count_ = 0;
     bool is_initialized_ = false;

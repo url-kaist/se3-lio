@@ -132,9 +132,24 @@ print(state.pose, state.vel, state.covariance)
 ```
 
 `register_frame` reproduces the node's per-frame data path (build measurement →
-apply extrinsic → sort by timestamp → `estimatePose`). Verified against the live
-node on a Livox sequence: 300 frames, exact timestamps, **ATE 3.2 mm / 0.03°**.
-See [python/README.md](python/README.md) and the harness in [python/verify/](python/verify/).
+apply extrinsic → sort by timestamp → `estimatePose`).
+
+### CLI pipeline
+
+`se3_lio_pipeline` runs odometry over a rosbag and writes a TUM trajectory — the
+offline Python equivalent of the node. Input is auto-detected: a rosbag2
+directory → ROS2/Livox, a `*.bag` file → ROS1/Ouster.
+
+```bash
+# ROS2 / Livox
+se3_lio_pipeline <rosbag_dir> --params pipelines/ros2/config/params.yaml --max-frames 300
+# ROS1 / Ouster (e.g. NTU VIRAL)
+se3_lio_pipeline eee_01.bag --params pipelines/ros1/config/ntu.yaml --max-frames 1500
+```
+
+See [python/README.md](python/README.md) for the full API, supported inputs, and
+the harness in [python/verify/](python/verify/) that checks the binding against
+the live node.
 
 </details>
 
@@ -160,7 +175,7 @@ ______________________________________________________________________
 ## :construction: Roadmap
 
 - [x] ROS2 (Humble) support
-- [x] Python bindings (pybind11) — core binding verified vs node (ATE 3.2 mm); PyPI distribution pending
+- [x] Python bindings (pybind11) + `se3_lio_pipeline` CLI (ROS2/Livox, ROS1/Ouster); PyPI distribution pending
 - [ ] More dataset configs and example launches
 - [ ] Continuous integration (build checks)
 

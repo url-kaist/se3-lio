@@ -33,16 +33,17 @@ inline std::vector<pointWithCov> transformGlobalPointsWithNoise(
 ManageMap::ManageMap(ManageMapConfig _config) : config_(_config) {
     is_initialized_ = false;
 
-    std::cout << " ManageMap parameters check: " << std::endl;
-    std::cout << "   resolution: " << config_.resolution << std::endl;
-    std::cout << "   max_layer: " << config_.max_layer << std::endl;
-    std::cout << "   layer_size: ";
-    for (const auto &size : config_.layer_size) {
-        std::cout << size << " ";
+    if (config_.verbose) {
+        std::cout << " ManageMap parameters check: " << std::endl;
+        std::cout << "   resolution: " << config_.resolution << std::endl;
+        std::cout << "   max_layer: " << config_.max_layer << std::endl;
+        std::cout << "   layer_size: ";
+        for (const auto &size : config_.layer_size) {
+            std::cout << size << " ";
+        }
+        std::cout << std::endl;
+        std::cout << "   plane_thres: " << config_.plane_thres << std::endl;
     }
-    std::cout << std::endl;
-    // std::cout << "   max_point_size: " << config_.max_point_size << std::endl;
-    std::cout << "   plane_thres: " << config_.plane_thres << std::endl;
 }
 
 void ManageMap::setMeasurement(LiDAR _measurement) { undistorted_cloud_ = _measurement; }
@@ -94,9 +95,9 @@ void ManageMap::updateMap() {
                       config_.max_point_size, config_.max_point_size, config_.plane_thres,
                       voxel_map_);
 
-    // if (config_.verbose) {
-    std::cout << "Map is updated. current map size: " << voxel_map_.size() << std::endl;
-    // }
+    if (config_.verbose) {
+        std::cout << "Map is updated. current map size: " << voxel_map_.size() << std::endl;
+    }
 }
 
 }  // namespace se3_lio

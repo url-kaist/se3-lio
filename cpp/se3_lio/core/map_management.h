@@ -31,6 +31,7 @@ struct ManageMapConfig {
     // int max_point_size = 1000;
     int max_point_size;
     float plane_thres = 0.01f;
+    bool verbose = false;
 };
 
 class ManageMap {

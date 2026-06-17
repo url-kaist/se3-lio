@@ -51,7 +51,9 @@ Eigen::Matrix3d StatePredict::getInitGrav() {
 
 void StatePredict::initState() {
     if (measurement_->imu.size() == 0) {
-        std::cout << "No IMU data, skip state initialization" << std::endl;
+        if (verbose_) {
+            std::cout << "No IMU data, skip state initialization" << std::endl;
+        }
         return;
     }
 
@@ -83,16 +85,18 @@ void StatePredict::initState() {
     if (imu_count_ > 20) {
         is_init_imu_ = true;
         is_initialized_ = true;
-        // if (config_.verbose) {
-        std::cout << "StatePredict() initialized" << std::endl;
-        // }
+        if (verbose_) {
+            std::cout << "StatePredict() initialized" << std::endl;
+        }
     }
 };
 
 State StatePredict::predictState() {
     if (!is_initialized_) {
-        std::cout << "StatePredict() is not initialized, so initialize the state first"
-                  << std::endl;
+        if (verbose_) {
+            std::cout << "StatePredict() is not initialized, so initialize the state first"
+                      << std::endl;
+        }
         initState();
         return init_state_;
     }
@@ -247,11 +251,11 @@ State StatePredict::predictState() {
         last_state = pred_state;
     }
 
-    // if (config_.verbose) {
-    std::cout << "StatePredict: " << pred_states_.size()
-              << " states predicted, forward: " << pred_states_forward_.size()
-              << ", backward: " << pred_states_backward_.size() << std::endl;
-    // }
+    if (verbose_) {
+        std::cout << "StatePredict: " << pred_states_.size()
+                  << " states predicted, forward: " << pred_states_forward_.size()
+                  << ", backward: " << pred_states_backward_.size() << std::endl;
+    }
 
     last_imu_vec_ = measurement_->imu;
     if (last_imu_vec_.size() != 0) last_imu_ = last_imu_vec_.back();
@@ -385,8 +389,10 @@ StatePredict::calculateRelPoseWithCov() {
     int backward_state_num = pred_states_backward_.size();  // k+1
     int backward_input_num = inputs_backward_.size();       // k
     if (backward_state_num != backward_input_num + 1) {
-        std::cout << "StatePredict: backward state num and input num mismatch, "
-                  << backward_state_num << " vs " << backward_input_num << std::endl;
+        if (verbose_) {
+            std::cout << "StatePredict: backward state num and input num mismatch, "
+                      << backward_state_num << " vs " << backward_input_num << std::endl;
+        }
         return {};
     }
 
@@ -421,8 +427,10 @@ StatePredict::calculateRelPoseWithCov() {
     int forward_state_num = pred_states_forward_.size();  // k+1
     int forward_input_num = inputs_forward_.size();       // k
     if (forward_state_num != forward_input_num + 1) {
-        std::cout << "StatePredict: forward state num and input num mismatch, " << forward_state_num
-                  << " vs " << forward_input_num << std::endl;
+        if (verbose_) {
+            std::cout << "StatePredict: forward state num and input num mismatch, "
+                      << forward_state_num << " vs " << forward_input_num << std::endl;
+        }
         return {};
     }
 

@@ -1,0 +1,44 @@
+[build-system]
+requires = ["scikit_build_core>=0.10", "pybind11"]
+build-backend = "scikit_build_core.build"
+
+[project]
+name = "se3-lio"
+version = "0.1.0"
+description = "SE(3) LiDAR-Inertial Odometry Python bindings"
+readme = "README.md"
+requires-python = ">=3.8"
+keywords = ["LiDAR", "IMU", "Odometry", "SLAM", "LIO"]
+dependencies = [
+    "numpy",
+    "pydantic>=2",
+    "tqdm",
+    "rosbags>=0.9",
+]
+
+[project.scripts]
+se3_lio_pipeline = "se3_lio.tools.cmd:run"
+
+[project.optional-dependencies]
+test = [
+    "pytest",
+]
+
+[tool.scikit-build]
+build-dir = "build/{wheel_tag}"
+build.verbose = false
+cmake.version = ">=3.16,<4"
+editable.mode = "redirect"
+editable.rebuild = true
+editable.verbose = true
+wheel.install-dir = "se3_lio/pybind/"
+sdist.exclude = [
+    ".venv*",
+    "build",
+    "dist",
+    "__pycache__",
+    "*.egg-info",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

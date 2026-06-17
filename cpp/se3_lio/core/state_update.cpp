@@ -64,9 +64,9 @@ bool StateUpdate::measurementModel(State _state) {
     double num_inliers = ptpl_list.size();
 
     if (num_inliers < 5) {
-        // if (config_.verbose) {
-        std::cout << " : No Effective Points! \n";
-        // }
+        if (map_config_.verbose) {
+            std::cout << " : No Effective Points! \n";
+        }
         return false;
     }
 
@@ -101,9 +101,9 @@ bool StateUpdate::measurementModel(State _state) {
 
 State StateUpdate::updateState() {
     if (!map_manager_->isInitialized()) {
-        // if (config_.verbose) {
-        std::cout << "Map is not initialized, so skip the update" << std::endl;
-        // }
+        if (map_config_.verbose) {
+            std::cout << "Map is not initialized, so skip the update" << std::endl;
+        }
         return curr_state_;
     }
 
@@ -177,10 +177,10 @@ State StateUpdate::updateState() {
 
             num_inliers_ = h_.rows();
 
-            // if (config_.verbose) {
-            std::cout << "State is updated with " << valid_iter_ << " iterations with " << h_.rows()
-                      << " inliers" << std::endl;
-            // }
+            if (map_config_.verbose) {
+                std::cout << "State is updated with " << valid_iter_ << " iterations with "
+                          << h_.rows() << " inliers" << std::endl;
+            }
 
             return new_state;
         }
@@ -200,7 +200,9 @@ void StateUpdate::appendGPSResidual(const State &state) {
     Eigen::Matrix2d gps_cov = measurement_->gps.covariance.block<2, 2>(0, 0);
 
     if (gps_cov.isZero(0)) {
-        std::cout << "GPS covariance is zero, set to default small value." << std::endl;
+        if (map_config_.verbose) {
+            std::cout << "GPS covariance is zero, set to default small value." << std::endl;
+        }
         gps_cov = Eigen::Matrix2d::Identity() * 0.001;
     }
 
@@ -256,7 +258,9 @@ void StateUpdate::appendGPSResidual(const State &state) {
 
 State StateUpdate::updateState_v2() {
     if (!map_manager_->isInitialized()) {
-        std::cout << "Map is not initialized, so skip the update" << std::endl;
+        if (map_config_.verbose) {
+            std::cout << "Map is not initialized, so skip the update" << std::endl;
+        }
         return curr_state_;
     }
 
@@ -273,7 +277,9 @@ State StateUpdate::updateState_v2() {
         }
 
         if (gps_available) {
-            std::cout << "Appending GPS residuals to the measurement model." << std::endl;
+            if (map_config_.verbose) {
+                std::cout << "Appending GPS residuals to the measurement model." << std::endl;
+            }
             appendGPSResidual(updated_state_);
         }
 
@@ -338,8 +344,10 @@ State StateUpdate::updateState_v2() {
 
             num_inliers_ = h_.rows();
 
-            std::cout << "State is updated (LiDAR + GPS) with " << valid_iter_ << " iterations and "
-                      << h_.rows() << " residuals" << std::endl;
+            if (map_config_.verbose) {
+                std::cout << "State is updated (LiDAR + GPS) with " << valid_iter_
+                          << " iterations and " << h_.rows() << " residuals" << std::endl;
+            }
 
             if (gps_available) {
                 last_gps_pos_ = measurement_->gps.pose.block<3, 1>(0, 3);
