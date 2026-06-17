@@ -63,6 +63,8 @@ rosbag play --clock <data.bag>
 publishes `/clock`). For live sensors, omit it — the default is `false`.
 Config lives in [pipelines/ros1/config/ntu.yaml](pipelines/ros1/config/ntu.yaml);
 swap datasets by editing the `<rosparam … file=…/>` line in the launch file.
+The launch opens RViz automatically — it needs a display: launch via
+`run_docker.sh` and run `xhost +local:root` on the host.
 
 </details>
 
@@ -95,6 +97,9 @@ ros2 bag play <rosbag2_dir>
 
 Config lives in [pipelines/ros2/config/params.yaml](pipelines/ros2/config/params.yaml)
 (edit `imu_topic` / `lidar_topic` / extrinsics for your sensor rig).
+
+`rviz:=true` opens RViz (registered cloud + trajectory). RViz needs a display:
+launch via `run_docker.sh` and run `xhost +local:root` on the host.
 
 </details>
 
