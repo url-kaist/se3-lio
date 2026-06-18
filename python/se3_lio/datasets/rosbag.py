@@ -41,7 +41,7 @@ def _convert_livox(msg, min_range):
     min_r2 = min_range * min_range
     last_x = last_y = last_z = 0.0
     xs, ys, zs, offs = [], [], [], []
-    for i in range(1, n):  # node starts at i = 1
+    for i in range(n):  # keep the first point too (mirrors the node's i=0 fix)
         p = pts[i]
         tag = p.tag & 0x30
         if tag != 0x10 and tag != 0x00:
