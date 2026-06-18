@@ -8,13 +8,29 @@ version = "0.1.0"
 description = "SE(3) LiDAR-Inertial Odometry Python bindings"
 readme = "README.md"
 requires-python = ">=3.8"
+authors = [
+    { name = "Gunhee Shin", email = "gunmaplehee@gmail.com" },
+]
+license = { text = "GPL-2.0" }
 keywords = ["LiDAR", "IMU", "Odometry", "SLAM", "LIO"]
+classifiers = [
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: GNU General Public License v2 (GPLv2)",
+    "Operating System :: POSIX :: Linux",
+    "Programming Language :: C++",
+    "Programming Language :: Python :: 3",
+    "Topic :: Scientific/Engineering",
+]
 dependencies = [
     "numpy",
     "pydantic>=2",
     "tqdm",
     "rosbags>=0.9",
 ]
+
+[project.urls]
+Homepage = "https://se3-lio.github.io"
+Repository = "https://github.com/url-kaist/se3-lio"
 
 [project.scripts]
 se3_lio_pipeline = "se3_lio.tools.cmd:run"
@@ -42,6 +58,18 @@ sdist.exclude = [
     "__pycache__",
     "*.egg-info",
 ]
+
+# Linux-first: the core needs OpenMP (libgomp), which auditwheel bundles into
+# the manylinux wheel automatically. Eigen/Sophus are fetched via FetchContent
+# and compiled in, so there are no system shared-lib deps to vendor.
+# macOS/Windows need OpenMP set up separately (libomp / MSVC /openmp) — add
+# their archs/os to this config and the workflow matrix once handled.
+[tool.cibuildwheel]
+build = "cp38-* cp39-* cp310-* cp311-* cp312-*"
+skip = ["*-musllinux*", "pp*"]
+archs = ["auto64"]
+build-frontend = "build"
+test-command = "python -c \"import se3_lio\""
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

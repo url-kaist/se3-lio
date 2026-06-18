@@ -19,3 +19,6 @@ run_docker_local.sh
 
 # private benchmark data/results (templates live under python/se3_lio/benchmark/examples/)
 /benchmark/
+
+# internal verification harness (implementation-phase; private dataset paths)
+/_verify/
