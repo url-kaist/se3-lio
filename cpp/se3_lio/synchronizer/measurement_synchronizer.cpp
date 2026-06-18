@@ -4,7 +4,6 @@ namespace se3_lio::synchronizer {
 
 MeasurementSynchronizer::MeasurementSynchronizer() : running_(true), sync_status_(false) {
     sync_thread_ = std::thread(&MeasurementSynchronizer::synchronizeIMULiDAR, this);
-    sync_thread_.detach();
 };
 
 MeasurementSynchronizer::~MeasurementSynchronizer() {
