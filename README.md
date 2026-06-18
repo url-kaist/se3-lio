@@ -1,6 +1,7 @@
 <div align="center">
     <h1>SE(3)-LIO</h1>
     <img src="https://img.shields.io/badge/-C++-blue?logo=cplusplus" />
+    <img src="https://img.shields.io/badge/-Python-blue?logo=python&logoColor=white" />
     <img src="https://img.shields.io/badge/ROS1-Noetic-blue" />
     <img src="https://img.shields.io/badge/ROS2-Humble-blue" />
     <img src="https://img.shields.io/badge/Ubuntu-E95420?logo=ubuntu&logoColor=white" />
@@ -202,6 +203,9 @@ ______________________________________________________________________
 
 - The voxel map ([cpp/se3_lio/core/temporary/voxel_map_util.{h,cpp}](cpp/se3_lio/core/temporary/voxel_map_util.h))
   is adapted from [HKU-MARS VoxelMap](https://github.com/hku-mars/VoxelMap) (GPL-2.0).
+- The project and code structure draws heavily on
+  [KISS-ICP](https://github.com/PRBonn/kiss-icp) and
+  [GenZ-ICP](https://github.com/cocel-postech/genz-icp).
 
 ______________________________________________________________________
 
