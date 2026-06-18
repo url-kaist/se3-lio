@@ -58,10 +58,10 @@ inline LiDAR convertLivoxMessage(livox_ros_driver2::msg::CustomMsg::SharedPtr _l
     int num_points = _lidar_msg->point_num;
     lidar.points.reserve(num_points);
 
-    // url::PointType last_point;
     CustomPointType last_point;
+    last_point.x = last_point.y = last_point.z = 0.0;  // origin: range filter drops it anyway
 
-    for (int i = 1; i < num_points; i++) {
+    for (int i = 0; i < num_points; i++) {
         if ((_lidar_msg->points[i].tag & 0x30) == 0x10 ||
             (_lidar_msg->points[i].tag & 0x30) == 0x00) {
             // url::PointType point;

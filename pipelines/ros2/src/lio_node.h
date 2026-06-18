@@ -13,6 +13,7 @@
 #include <rclcpp/rclcpp.hpp>
 #include <sensor_msgs/msg/imu.hpp>
 #include <sensor_msgs/msg/point_cloud2.hpp>
+#include <tf2_ros/transform_broadcaster.h>
 
 #include "tf2_ros/transform_broadcaster.h"
 
@@ -53,8 +54,7 @@ private:
     rclcpp::Subscription<IMU_MSG_TYPE>::SharedPtr sub_imu_;
     rclcpp::Subscription<LIDAR_MSG_TYPE>::SharedPtr sub_lidar_;
 
-    std::string imu_topic_;
-    std::string lidar_topic_;
+    std::shared_ptr<tf2_ros::TransformBroadcaster> tf_broadcaster_;
 
     std::queue<IMU_MSG_TYPE::SharedPtr> imu_queue_;
     std::queue<LIDAR_MSG_TYPE::SharedPtr> lidar_queue_;

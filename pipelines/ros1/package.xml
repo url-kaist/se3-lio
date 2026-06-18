@@ -8,7 +8,7 @@
     <maintainer email="gunhee_shin@kaist.ac.kr">Gunhee Shin</maintainer>
     <author email="gunhee_shin@kaist.ac.kr">Gunhee Shin</author>
 
-    <license>MIT</license>
+    <license>GPL-2.0</license>
 
     <!-- Dependencies -->
     <buildtool_depend>catkin</buildtool_depend>

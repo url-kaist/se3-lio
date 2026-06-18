@@ -1,4 +1,5 @@
 from launch import LaunchDescription
+from launch.actions import DeclareLaunchArgument
 from launch.substitutions import LaunchConfiguration
 from launch_ros.actions import Node
 from launch.conditions import IfCondition
@@ -22,6 +23,7 @@ def generate_launch_description():
     )
 
     rviz = LaunchConfiguration("rviz", default="false")
+    use_sim_time = LaunchConfiguration("use_sim_time", default="false")
 
     rviz_node = Node(
         package="rviz2",
@@ -35,8 +37,18 @@ def generate_launch_description():
         package="se3_lio",
         executable="lio_node",
         name="lio_node",
-        parameters=[config_file_path],
+        parameters=[config_file_path, {"use_sim_time": use_sim_time}],
         output="screen",
     )
 
-    return LaunchDescription([node, rviz_node])
+    return LaunchDescription(
+        [
+            DeclareLaunchArgument(
+                "use_sim_time",
+                default_value="false",
+                description="Use /clock time (set true when replaying a rosbag with --clock)",
+            ),
+            node,
+            rviz_node,
+        ]
+    )

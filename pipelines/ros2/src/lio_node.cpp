@@ -10,15 +10,19 @@ LioNode::LioNode() : Node("se3_lio_node") {
     this->get_parameter("imu_topic", imu_topic);
     this->get_parameter("lidar_topic", lidar_topic);
 
-    auto qos_for_imu = rclcpp::QoS(rclcpp::KeepLast(10000)).reliable();
-    auto qos_reliable = rclcpp::QoS(rclcpp::KeepLast(10)).reliable();
+    // Sensor streams (IMU/LiDAR) are typically published best_effort — and so is
+    // `ros2 bag play` for such topics. A reliable subscriber would not match a
+    // best_effort publisher (no data arrives), so subscribe best_effort here.
+    // Keep a deep IMU queue for the high-rate stream.
+    auto qos_imu = rclcpp::QoS(rclcpp::KeepLast(10000)).best_effort();
     auto qos_best_effort = rclcpp::QoS(rclcpp::KeepLast(10)).best_effort();
+    auto qos_reliable = rclcpp::QoS(rclcpp::KeepLast(10)).reliable();  // node outputs (odom/path/cloud)
 
     sub_imu_ = this->create_subscription<IMU_MSG_TYPE>(
-        imu_topic, qos_for_imu, std::bind(&LioNode::imuCallback, this, std::placeholders::_1));
+        imu_topic, qos_imu, std::bind(&LioNode::imuCallback, this, std::placeholders::_1));
 
     sub_lidar_ = this->create_subscription<LIDAR_MSG_TYPE>(
-        lidar_topic, qos_reliable, std::bind(&LioNode::lidarCallback, this, std::placeholders::_1));
+        lidar_topic, qos_best_effort, std::bind(&LioNode::lidarCallback, this, std::placeholders::_1));
 
     this->declare_parameter<double>("sensors.imu.acc_cov", 0.1);
     this->declare_parameter<double>("sensors.imu.gyr_cov", 0.1);
@@ -84,6 +88,8 @@ LioNode::LioNode() : Node("se3_lio_node") {
     pub_path_ = this->create_publisher<nav_msgs::msg::Path>("/local/path", qos_reliable);
     pub_cloud_body_ = this->create_publisher<sensor_msgs::msg::PointCloud2>(
         "/local/cloud_registered_body", qos_reliable);
+
+    tf_broadcaster_ = std::make_shared<tf2_ros::TransformBroadcaster>(this);
 }
 
 LioNode::~LioNode() {
@@ -139,7 +145,17 @@ void LioNode::pubCloud(rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedP
                        std::string frame_id) {
     sensor_msgs::msg::PointCloud2 cloud_msg;
 
-    pcl::toROSMsg(_lidar.points, cloud_msg);
+    pcl::PointCloud<pcl::PointXYZI> pcl_cloud;
+    pcl_cloud.reserve(_lidar.points.size());
+    for (const auto &p : _lidar.points) {
+        pcl::PointXYZI q;
+        q.x = p.x;
+        q.y = p.y;
+        q.z = p.z;
+        q.intensity = p.intensity;
+        pcl_cloud.push_back(q);
+    }
+    pcl::toROSMsg(pcl_cloud, cloud_msg);
 
     cloud_msg.header.stamp = rclcpp::Time(static_cast<int64_t>(_lidar.header.timestamp * 1e9));
     cloud_msg.header.frame_id = frame_id;
@@ -150,10 +166,6 @@ void LioNode::pubCloud(rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedP
 void LioNode::broadcastTF(const se3_lio::State &_state,
                           std::string frame_id,
                           std::string child_frame_id) {
-    std::unique_ptr<tf2_ros::TransformBroadcaster> br;
-    br.reset(new tf2_ros::TransformBroadcaster(this));
-
-    // geometry_msgs::TransformStamped transformStamped;
     geometry_msgs::msg::TransformStamped transformStamped;
     transformStamped.header.stamp = rclcpp::Time(static_cast<int64_t>(_state.stamp * 1e9));
     transformStamped.header.frame_id = frame_id;
@@ -161,7 +173,7 @@ void LioNode::broadcastTF(const se3_lio::State &_state,
 
     convertStateToROSTFMsg(_state, transformStamped);
 
-    br->sendTransform(transformStamped);
+    tf_broadcaster_->sendTransform(transformStamped);
 }
 
 void LioNode::pushAllROSMessages() {
@@ -202,18 +214,21 @@ void LioNode::process() {
         synced_measurement = synchronizer_.getSyncedMeasurement();
         if (!synced_measurement->is_synced) continue;
 
-        std::cout << std::fixed << std::setprecision(18);
-        std::cout << "[MeasurementSynchronizer] Synced IMU size: " << synced_measurement->imu.size()
-                  << ", LiDAR points size: " << synced_measurement->lidar.points.size()
-                  << std::endl;
-        std::cout << "IMU first time : " << synced_measurement->imu.front().header.timestamp
-                  << ", last time: " << synced_measurement->imu.back().header.timestamp
-                  << std::endl;
-        std::cout << "LiDAR start time : " << synced_measurement->lidar.header.timestamp
-                  << ", end time: "
-                  << synced_measurement->lidar.header.timestamp +
-                         synced_measurement->lidar.points.back().timestamp
-                  << std::endl;
+        if (se3_lio_config_.verbose) {
+            std::cout << std::fixed << std::setprecision(18);
+            std::cout << "[MeasurementSynchronizer] Synced IMU size: "
+                      << synced_measurement->imu.size()
+                      << ", LiDAR points size: " << synced_measurement->lidar.points.size()
+                      << std::endl;
+            std::cout << "IMU first time : " << synced_measurement->imu.front().header.timestamp
+                      << ", last time: " << synced_measurement->imu.back().header.timestamp
+                      << std::endl;
+            std::cout << "LiDAR start time : " << synced_measurement->lidar.header.timestamp
+                      << ", end time: "
+                      << synced_measurement->lidar.header.timestamp +
+                             synced_measurement->lidar.points.back().timestamp
+                      << std::endl;
+        }
 
         synced_measurement->lidar.points =
             transformPointCloud(synced_measurement->lidar.points, lidar_extrinsic_);

@@ -58,10 +58,17 @@ if(EXISTS ${SE3_LIO_CPP_INSTALL_DIR})
     )
 
     install(TARGETS lio_node
-        DESTINATION lib/
+        DESTINATION lib/${PROJECT_NAME}
     )
 elseif (EXISTS ${SE3_LIO_CPP_DIR})
     message(STATUS "Building SE3-LIO C++ core library from source...")
+    # The core libs (core/synchronizer/pipeline) install side-by-side with
+    # lio_node into lib/se3_lio. RPATH=$ORIGIN lets `ros2 run` resolve them at
+    # runtime — a from-source colcon install otherwise strips the build RPATH,
+    # so the executable can't find libsynchronizer.so/libcore.so/libpipeline.so.
+    # Set before add_subdirectory so the core targets inherit it too.
+    set(CMAKE_INSTALL_RPATH "$ORIGIN")
+    set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
     add_subdirectory(${PROJECT_SOURCE_DIR}/../cpp/se3_lio ${CMAKE_CURRENT_BINARY_DIR}/se3_lio_cpp)
     include_directories(${PROJECT_SOURCE_DIR}/../cpp/se3_lio)
 

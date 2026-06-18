@@ -94,7 +94,17 @@ void LioNode::pubCloud(ros::Publisher pub_cloud,
                        std::string frame_id) {
     sensor_msgs::PointCloud2 cloud_msg;
 
-    pcl::toROSMsg(_lidar.points, cloud_msg);
+    pcl::PointCloud<pcl::PointXYZI> pcl_cloud;
+    pcl_cloud.reserve(_lidar.points.size());
+    for (const auto &p : _lidar.points) {
+        pcl::PointXYZI q;
+        q.x = p.x;
+        q.y = p.y;
+        q.z = p.z;
+        q.intensity = p.intensity;
+        pcl_cloud.push_back(q);
+    }
+    pcl::toROSMsg(pcl_cloud, cloud_msg);
 
     cloud_msg.header.stamp = ros::Time(_lidar.header.timestamp);
     cloud_msg.header.frame_id = frame_id;
