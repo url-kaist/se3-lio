@@ -147,9 +147,10 @@ se3_lio_pipeline <rosbag_dir> --params pipelines/ros2/config/params.yaml --max-f
 se3_lio_pipeline eee_01.bag --params pipelines/ros1/config/ntu.yaml --max-frames 1500
 ```
 
-See [python/README.md](python/README.md) for the full API, supported inputs, and
-the harness in [python/verify/](python/verify/) that checks the binding against
-the live node.
+Add `--rerun-save <path.rrd>` (needs `pip install -e ./python/[viz]`) to also record
+the trajectory and the accumulating world-frame map for [Rerun](https://rerun.io).
+
+See [python/README.md](python/README.md) for the full API and supported inputs.
 
 </details>
 

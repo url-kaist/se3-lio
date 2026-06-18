@@ -12,9 +12,8 @@
 
       lidar:
         min_range: 0.25
-        max_range: 100000
-        ranging_covs: [0.02]
-        angle_covs: [0.15]
+        range_cov: 0.02
+        angle_cov: 0.15
 
       # LiDAR->IMU extrinsic — set for your sensor rig. [quat : w, x, y, z]
       t_exts: [0.0, 0.0, 0.0]

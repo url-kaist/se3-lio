@@ -16,8 +16,8 @@ class SE3LIOConfig(BaseModel):
     bg_noise: float = 0.0001
     ba_noise: float = 0.0001
 
-    lidar_range_noise: float = 0.02
-    lidar_angle_noise: float = 0.15
+    lidar_range_noise: float = 0.001
+    lidar_angle_noise: float = 0.01
 
     downsample_resolution: float = 0.5
     max_iter: int = 4

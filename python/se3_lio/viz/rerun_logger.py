@@ -62,11 +62,13 @@ class RerunLogger:
 
         _set_time(rr, "stamp", float(stamp))
 
-        self._zmin = min(self._zmin, float(world[:, 2].min()))
-        self._zmax = max(self._zmax, float(world[:, 2].max()))
-        colors = _height_to_rgb(world[:, 2], self._zmin, self._zmax)
-        rr.log(f"world/map/{self._i:05d}", rr.Points3D(world, colors=colors, radii=0.03))
-        self._i += 1
+        # A scan can be empty after range/tag filtering; min/max would raise.
+        if world.shape[0] > 0:
+            self._zmin = min(self._zmin, float(world[:, 2].min()))
+            self._zmax = max(self._zmax, float(world[:, 2].max()))
+            colors = _height_to_rgb(world[:, 2], self._zmin, self._zmax)
+            rr.log(f"world/map/{self._i:05d}", rr.Points3D(world, colors=colors, radii=0.03))
+            self._i += 1
 
         pos = pose[:3, 3]
         self._traj.append(pos)

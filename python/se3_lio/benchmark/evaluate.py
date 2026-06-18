@@ -1,8 +1,7 @@
 """SE(3)-aligned ATE evaluation for TUM trajectories.
 
-Self-contained: numpy + stdlib only, no compiled binding. The TUM I/O and
-timestamp association are ported from python/verify/{tum,ate}.py so this module
-can be unit-tested on the host without the LIO core built.
+Self-contained: numpy + stdlib only, no compiled binding, so this module can be
+unit-tested on the host without the LIO core built.
 """
 
 import numpy as np

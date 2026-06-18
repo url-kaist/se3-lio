@@ -81,7 +81,7 @@ print(pipeline.summary())
 
 ## Visualization (Rerun)
 
-Both `se3_lio_pipeline` and `verify/run_offline.py` accept `--rerun-save <path.rrd>`
+`se3_lio_pipeline` accepts `--rerun-save <path.rrd>`
 (and `--rerun-spawn` to open the viewer live). Per frame the estimated pose, the
 scan transformed into the world frame, and the trajectory are logged; Rerun
 accumulates the world scans across the timeline, so playing it back shows the map
@@ -95,10 +95,9 @@ rerun results/eee_01.rrd               # open the recording (match the rerun-sdk
 ```
 
 The logger lives in [se3_lio/viz/rerun_logger.py](se3_lio/viz/rerun_logger.py)
-(`lidar_to_world`, `RerunLogger`, `read_rrd_trajectory`). A verification harness
-covers it: `tests/test_rerun_viz.py` (G1 transform math, G2 `.rrd` round-trip,
-both runnable without the binding) and `verify/check_rerun.py` (G3 — the `.rrd`
-trajectory matches the TUM output). Current logging uses the raw input scan;
+(`lidar_to_world`, `RerunLogger`, `read_rrd_trajectory`). `tests/test_rerun_viz.py`
+covers it (transform math + `.rrd` round-trip, runnable without the binding).
+Current logging uses the raw input scan;
 logging the undistorted + downsampled cloud needs exposing it from the core
 (planned next).
 
