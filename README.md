@@ -211,9 +211,9 @@ ______________________________________________________________________
 
 - The voxel map ([cpp/se3_lio/core/temporary/voxel_map_util.{h,cpp}](cpp/se3_lio/core/temporary/voxel_map_util.h))
   is adapted from [HKU-MARS VoxelMap](https://github.com/hku-mars/VoxelMap) (GPL-2.0).
-- The project and code structure draws heavily on
-  [KISS-ICP](https://github.com/PRBonn/kiss-icp) and
-  [GenZ-ICP](https://github.com/cocel-postech/genz-icp).
+- Thanks to [KISS-ICP](https://github.com/PRBonn/kiss-icp) and
+  [GenZ-ICP](https://github.com/cocel-postech/genz-icp), which we referenced for
+  the project layout and code structure.
 
 ______________________________________________________________________
 
