@@ -6,6 +6,7 @@
     <img src="https://img.shields.io/badge/ROS2-Humble-blue" />
     <img src="https://img.shields.io/badge/Ubuntu-E95420?logo=ubuntu&logoColor=white" />
     <img src="https://img.shields.io/badge/License-GPL--2.0-green" />
+    <a href="https://pypi.org/project/se3-lio/"><img src="https://img.shields.io/pypi/v/se3-lio?logo=pypi&logoColor=white&label=PyPI" /></a>
     <br />
     <a href="https://arxiv.org/abs/2603.16118"><img src="https://img.shields.io/badge/arXiv-b33737?logo=arXiv" /></a>
     <a href="https://youtu.be/xu2S5Q_2fpc"><img src="https://img.shields.io/badge/YouTube-FF0000?logo=youtube&logoColor=white" /></a>
@@ -107,10 +108,17 @@ launch via `run_docker.sh` and run `xhost +local:root` on the host.
 <details>
 <summary><b>Python bindings (pybind11)</b></summary>
 
-The core is exposed to Python via pybind11 ([python/](python/)). It links the C++
-core (PCL, Eigen, Sophus, OpenMP), so build it **inside the ROS2 Docker image**.
+The core is exposed to Python via pybind11 ([python/](python/)). Linux x86_64
+wheels are on PyPI, so most users can just:
 
-### Build
+```bash
+pip install se3-lio          # add [viz] for Rerun visualization
+```
+
+### Build from source
+
+The C++ core needs OpenMP (libgomp); Eigen and Sophus are fetched and compiled
+in. Build **inside the ROS2 Docker image**, where OpenMP is available.
 
 ```bash
 # inside the se3_lio:ros2 container
@@ -177,7 +185,7 @@ ______________________________________________________________________
 ## :construction: Roadmap
 
 - [x] ROS2 (Humble) support
-- [x] Python bindings (pybind11) + `se3_lio_pipeline` CLI (ROS2/Livox, ROS1/Ouster); PyPI distribution pending
+- [x] Python bindings (pybind11) + `se3_lio_pipeline` CLI (ROS2/Livox, ROS1/Ouster); published on PyPI (Linux wheels)
 - [ ] More dataset configs and example launches
 - [ ] Continuous integration (build checks)
 

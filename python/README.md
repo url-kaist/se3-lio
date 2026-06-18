@@ -2,11 +2,19 @@
 
 Python bindings for the ROS-agnostic SE(3) LiDAR-Inertial Odometry C++ core.
 
-## Build
+## Install
 
-The bindings link the C++ core, which requires PCL, Eigen, Sophus and OpenMP.
-Build inside the project's ROS2 Docker image (`docker/ros2/`), where these are
-available.
+Linux x86_64 wheels are on PyPI (the C++ core is bundled in):
+
+```bash
+pip install se3-lio          # add [viz] for Rerun visualization
+```
+
+## Build from source
+
+The bindings link the C++ core, which needs OpenMP (libgomp); Eigen and Sophus
+are fetched and compiled in. Build inside the project's ROS2 Docker image
+(`docker/ros2/`), where OpenMP is available.
 
 ```bash
 # inside the container, from the repo root
