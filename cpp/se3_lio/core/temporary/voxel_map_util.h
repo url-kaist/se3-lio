@@ -7,7 +7,6 @@
 #ifndef VOXEL_MAP_UTIL_HPP
 #define VOXEL_MAP_UTIL_HPP
 // #include "common_lib.hpp"
-#include <pcl/common/io.h>
 #include <stdio.h>
 
 #include <Eigen/Core>
@@ -611,7 +610,7 @@ public:
     //     return true;
     // }
 
-    void getPoints(pcl::PointCloud<CustomPointType> &points) {
+    void getPoints(std::vector<CustomPointType> &points) {
         // url::PointType p;
         CustomPointType p;
         p.x = voxel_center_[0];

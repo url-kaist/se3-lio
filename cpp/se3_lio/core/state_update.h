@@ -4,6 +4,8 @@
 // Eigen library
 #include <Eigen/Dense>
 
+#include <memory>
+
 // common
 #include "common/data_type.h"
 

@@ -1,5 +1,8 @@
 #include "map_management.h"
 
+#include <algorithm>
+#include <iostream>
+
 namespace se3_lio {
 
 inline std::vector<pointWithCov> transformGlobalPointsWithNoise(

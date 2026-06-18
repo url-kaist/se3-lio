@@ -3,6 +3,8 @@
 // C++ standard libraries
 #include <Eigen/Core>
 
+#include <memory>
+
 // Common
 #include "common/data_type.h"
 #include "common/utils.h"

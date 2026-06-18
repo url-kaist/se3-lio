@@ -1,28 +1,24 @@
 #ifndef DATA_TYPE_H
 #define DATA_TYPE_H
 
-#include <pcl/point_cloud.h>
-#include <pcl/point_types.h>
-
 #include <Eigen/Dense>
-
-using PointTypePCL = pcl::PointXYZINormal;
-using PointCloudTypePCL = pcl::PointCloud<pcl::PointXYZINormal>;
+#include <cstdint>
+#include <memory>
+#include <string>
+#include <vector>
 
 struct CustomPointType {
-    PCL_ADD_POINT4D;
-    float intensity;
-    double timestamp;  // timestamp denotes (point_time - pointcloud_begin_time)
-    EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-} EIGEN_ALIGN16;
+    float x = 0.f, y = 0.f, z = 0.f;
+    float intensity = 0.f;
+    double timestamp = 0.0;  // timestamp denotes (point_time - pointcloud_begin_time)
 
-POINT_CLOUD_REGISTER_POINT_STRUCT(CustomPointType,
-                                  (float, x, x)(float, y, y)(float, z, z)(
-                                      float, intensity, intensity)(double, timestamp, timestamp))
+    Eigen::Vector3f getVector3fMap() const { return Eigen::Vector3f(x, y, z); }
+    Eigen::Vector4f getVector4fMap() const { return Eigen::Vector4f(x, y, z, 1.0f); }
+};
 
 namespace se3_lio {
 
-using PointCloudType = pcl::PointCloud<CustomPointType>;
+using PointCloudType = std::vector<CustomPointType>;
 struct Header {
     uint32_t seq;
     double timestamp;
@@ -37,7 +33,7 @@ struct IMU {
 
 struct LiDAR {
     Header header;
-    pcl::PointCloud<CustomPointType> points;
+    PointCloudType points;
     std::vector<Eigen::Matrix3d> noises;
 };
 

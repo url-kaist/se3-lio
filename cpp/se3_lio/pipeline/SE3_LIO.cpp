@@ -1,5 +1,7 @@
 #include "SE3_LIO.h"
 
+#include <memory>
+
 namespace se3_lio::pipeline {
 
 SE3_LIO::SE3_LIO(const SE3_LIO_Config &_config) : config_(_config) {

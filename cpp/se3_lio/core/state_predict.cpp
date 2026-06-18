@@ -1,5 +1,8 @@
 #include "state_predict.h"
 
+#include <algorithm>
+#include <iostream>
+
 namespace se3_lio {
 
 StatePredict::StatePredict() {

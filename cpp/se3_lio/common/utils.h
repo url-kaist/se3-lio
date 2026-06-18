@@ -1,9 +1,6 @@
 #ifndef SE3_LIO_COMMON_UTILS_H
 #define SE3_LIO_COMMON_UTILS_H
 
-#include <pcl/point_cloud.h>
-#include <pcl/point_types.h>
-
 #include <Eigen/Dense>
 #include <unordered_map>
 
@@ -19,12 +16,13 @@ struct std::hash<Eigen::Vector3i> {
 
 namespace se3_lio {
 
-inline pcl::PointCloud<CustomPointType> transformPointCloud(
-    const pcl::PointCloud<CustomPointType> &_cloud, const Eigen::Matrix4d &_transform) {
-    pcl::PointCloud<CustomPointType> transformed_cloud;
+inline PointCloudType transformPointCloud(
+    const PointCloudType &_cloud, const Eigen::Matrix4d &_transform) {
+    PointCloudType transformed_cloud;
+    transformed_cloud.reserve(_cloud.size());
 
     Eigen::Matrix4f tsfm_float = _transform.cast<float>();
-    for (const auto &point : _cloud.points) {
+    for (const auto &point : _cloud) {
         CustomPointType transformed_point;
         Eigen::Vector4f point_homo = point.getVector4fMap();
         point_homo[3] = 1.0f;
@@ -64,7 +62,7 @@ inline void downsampleCloud(LiDAR &_cloud, const double _resolution) {
         }
     }
 
-    pcl::PointCloud<CustomPointType> downsampled_cloud_out;
+    PointCloudType downsampled_cloud_out;
     downsampled_cloud_out.reserve(grid.size());
 
     for (const auto &voxel_and_point : grid) {

@@ -1,5 +1,8 @@
 #include "state_update.h"
 
+#include <iostream>
+#include <memory>
+
 namespace se3_lio {
 
 inline std::vector<pointWithCov> transformLocalPointsWithNoise(
