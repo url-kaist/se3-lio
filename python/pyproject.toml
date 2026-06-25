@@ -24,6 +24,7 @@ classifiers = [
 dependencies = [
     "numpy",
     "pydantic>=2",
+    "pyyaml",
     "tqdm",
     "rosbags>=0.9",
 ]
@@ -40,7 +41,7 @@ test = [
     "pytest",
 ]
 viz = [
-    "rerun-sdk>=0.20",
+    "polyscope",
 ]
 
 [tool.scikit-build]

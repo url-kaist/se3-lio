@@ -57,13 +57,15 @@ needed; `ouster`/`hesai` use `PointCloud2`, `livox` uses Livox `CustomMsg`.
 ### Run
 
 ```bash
-roslaunch se3_lio run_se3lio_ntu.launch use_sim_time:=true
+roslaunch se3_lio run_se3lio_ntu.launch use_sim_time:=true   # NTU VIRAL
+roslaunch se3_lio run_se3lio_ncd.launch use_sim_time:=true   # Newer College (Multi-Cam)
 rosbag play --clock <data.bag>
 ```
 
 `use_sim_time:=true` makes the node follow the bag clock (`rosbag play --clock`
 publishes `/clock`). For live sensors, omit it — the default is `false`.
-Config lives in [pipelines/ros1/config/ntu.yaml](pipelines/ros1/config/ntu.yaml);
+Configs live in [pipelines/ros1/config/ntu.yaml](pipelines/ros1/config/ntu.yaml)
+and [pipelines/ros1/config/ncd.yaml](pipelines/ros1/config/ncd.yaml);
 swap datasets by editing the `<rosparam … file=…/>` line in the launch file.
 The launch opens RViz automatically — it needs a display: launch via
 `run_docker.sh` and run `xhost +local:root` on the host.
@@ -112,7 +114,7 @@ The core is exposed to Python via pybind11 ([python/](python/)). Linux x86_64
 wheels are on PyPI, so most users can just:
 
 ```bash
-pip install se3-lio          # add [viz] for Rerun visualization
+pip install se3-lio          # add [viz] for the live Polyscope viewer
 ```
 
 ### Build from source
@@ -154,10 +156,12 @@ directory → ROS2/Livox, a `*.bag` file → ROS1/Ouster.
 se3_lio_pipeline <rosbag_dir> --params pipelines/ros2/config/params.yaml --max-frames 300
 # ROS1 / Ouster (e.g. NTU VIRAL)
 se3_lio_pipeline eee_01.bag --params pipelines/ros1/config/ntu.yaml --max-frames 1500
+# ROS1 / Ouster (e.g. Newer College Multi-Cam)
+se3_lio_pipeline MathsHard_MC.bag --params pipelines/ros1/config/ncd.yaml --max-frames 1500
 ```
 
-Add `--rerun-save <path.rrd>` (needs `pip install -e ./python/[viz]`) to also record
-the trajectory and the accumulating world-frame map for [Rerun](https://rerun.io).
+Add `--visualize` for a live [Polyscope](https://polyscope.run) viewer (current
+scan + trajectory, play/pause/step) — needs `pip install se3-lio[viz]`.
 
 See [python/README.md](python/README.md) for the full API and supported inputs.
 

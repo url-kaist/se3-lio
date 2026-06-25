@@ -48,7 +48,7 @@ class OdometryPipeline:
             self.stamps.append(state.stamp)
             self.poses.append(np.array(state.pose))
             if logger is not None:
-                logger.log_frame(state.stamp, self.poses[-1], frame.points)
+                logger.log_frame(state.stamp, self.poses[-1], frame.points, state.grav)
         return self
 
     def save_tum(self, path):

@@ -7,7 +7,7 @@ Python bindings for the ROS-agnostic SE(3) LiDAR-Inertial Odometry C++ core.
 Linux x86_64 wheels are on PyPI (the C++ core is bundled in):
 
 ```bash
-pip install se3-lio          # add [viz] for Rerun visualization
+pip install se3-lio          # add [viz] for the live Polyscope viewer
 ```
 
 ## Build from source
@@ -87,27 +87,21 @@ pipeline.save_tum("traj.tum")
 print(pipeline.summary())
 ```
 
-## Visualization (Rerun)
+## Visualization (Polyscope)
 
-`se3_lio_pipeline` accepts `--rerun-save <path.rrd>`
-(and `--rerun-spawn` to open the viewer live). Per frame the estimated pose, the
-scan transformed into the world frame, and the trajectory are logged; Rerun
-accumulates the world scans across the timeline, so playing it back shows the map
-being built.
+`se3_lio_pipeline --visualize` opens a live [Polyscope](https://polyscope.run)
+viewer: the current scan (gravity-aligned world frame) and the trajectory, with
+play/pause `[space]`, step `[N]`, center `[C]`, and screenshot `[S]`.
 
 ```bash
-pip install -e ./python/[viz]          # adds rerun-sdk
+pip install se3-lio[viz]               # adds polyscope
 se3_lio_pipeline eee_01.bag --params pipelines/ros1/config/ntu.yaml \
-    --max-frames 2500 --output results/ --rerun-save results/eee_01.rrd
-rerun results/eee_01.rrd               # open the recording (match the rerun-sdk version)
+    --max-frames 1500 --visualize
 ```
 
-The logger lives in [se3_lio/viz/rerun_logger.py](se3_lio/viz/rerun_logger.py)
-(`lidar_to_world`, `RerunLogger`, `read_rrd_trajectory`). `tests/test_rerun_viz.py`
-covers it (transform math + `.rrd` round-trip, runnable without the binding).
-Current logging uses the raw input scan;
-logging the undistorted + downsampled cloud needs exposing it from the core
-(planned next).
+The viewer lives in [se3_lio/viz/polyscope_viz.py](se3_lio/viz/polyscope_viz.py)
+(`PolyscopeVisualizer`, lazily importing `polyscope`). It implements the pipeline
+logger interface (`log_frame`), following KISS-ICP / GenZ-ICP's Polyscope viewers.
 
 ### Raw binding
 

@@ -37,8 +37,9 @@ def run():
         "--output", default="results", help="output directory for the TUM trajectory"
     )
     ap.add_argument("--no-progress", action="store_true", help="disable progress bar")
-    ap.add_argument("--rerun-save", help="write a Rerun .rrd recording to this path")
-    ap.add_argument("--rerun-spawn", action="store_true", help="open the Rerun viewer live")
+    ap.add_argument(
+        "--visualize", action="store_true", help="open a live Polyscope viewer (needs se3-lio[viz])"
+    )
     args = ap.parse_args()
 
     input_type = args.input_type
@@ -56,10 +57,10 @@ def run():
     print(f"synchronized {len(dataset)} frames")
 
     logger = None
-    if args.rerun_save or args.rerun_spawn:
-        from se3_lio.viz import RerunLogger
+    if args.visualize:
+        from se3_lio.viz import PolyscopeVisualizer
 
-        logger = RerunLogger(p["extrinsic"])
+        logger = PolyscopeVisualizer(p["extrinsic"])
 
     pipeline = OdometryPipeline(dataset, p["config"], p["extrinsic"])
     pipeline.run(progress=not args.no_progress, logger=logger)
@@ -69,11 +70,8 @@ def run():
     out_path = out_dir / f"{Path(args.bag.rstrip('/')).name}_se3lio.tum"
     pipeline.save_tum(out_path)
 
-    if logger is not None and args.rerun_save:
-        logger.save(args.rerun_save)
-        print(f"rerun -> {args.rerun_save}")
-    if logger is not None and args.rerun_spawn:
-        logger.spawn()
+    if logger is not None:
+        logger.hold()
 
     print(pipeline.summary())
     print(f"trajectory -> {out_path}")
