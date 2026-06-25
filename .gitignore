@@ -17,8 +17,20 @@ docs/
 # maintainer-local run scripts (real host paths)
 run_docker_local.sh
 
-# private benchmark data/results (templates live under python/se3_lio/benchmark/examples/)
+# Polyscope / ImGui runtime config (written to CWD when the viewer runs)
+.polyscope.ini
+imgui.ini
+
+# private benchmark data/results
 /benchmark/
+
+# python benchmark runner + its tests — kept private for now (not yet public).
+# Includes the Rerun visualization (moved under benchmark/viz/), also private.
+/python/se3_lio/benchmark/
+/python/tests/_bench_import.py
+/python/tests/test_benchmark_evaluate.py
+/python/tests/test_benchmark_search.py
+/python/tests/test_rerun_viz.py
 
 # internal verification harness (implementation-phase; private dataset paths)
 /_verify/
