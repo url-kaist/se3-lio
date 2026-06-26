@@ -13,13 +13,9 @@ sensors:
     range_cov: 0.02
     angle_cov: 0.15
 
-    #Multi-cam
-    t_exts: [-0.011, -0.02329, 0.04412]
-    q_exts: [ 1.0, 0.0, 0.0, 0.0]
-
-    #Stereo-Cam
-    # t_exts: [-0.006253, 0.011775, 0.028535]
-    # q_exts: [0.0, 0.0, 0.0, 1.0]
+  # [quat : w, x, y, z] — Ouster OS1 internal IMU -> LiDAR (Multi-Cam)
+  t_exts: [-0.011, -0.02329, 0.04412]
+  q_exts: [1.0, 0.0, 0.0, 0.0]
 
 downsample:
   resolution: 0.5
@@ -27,8 +23,14 @@ downsample:
 max_iter: 4
 
 voxel_map:
-  resolution: 1.0
+  resolution: 0.75
   max_layer: 2
   layer_size: [5, 5, 5, 5, 5]
   max_point_size: 1000
-  plane_threshold: 0.01
+  plane_threshold: 0.05
+
+  # Local-map sliding window: evict voxels outside a +/- half_map_size box
+  # (in voxels) once the body has moved sliding_thresh meters. Bounds RAM.
+  map_sliding_en: true
+  sliding_thresh: 8.0
+  half_map_size: 50
