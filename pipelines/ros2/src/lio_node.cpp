@@ -63,6 +63,9 @@ LioNode::LioNode() : Node("se3_lio_node") {
     this->declare_parameter<std::vector<int>>("voxel_map.layer_size", {5, 5, 5, 5, 5});
     this->declare_parameter<int>("voxel_map.max_point_size", 1000);
     this->declare_parameter<float>("voxel_map.plane_threshold", 0.01f);
+    this->declare_parameter<bool>("voxel_map.map_sliding_en", false);
+    this->declare_parameter<double>("voxel_map.sliding_thresh", 8.0);
+    this->declare_parameter<int>("voxel_map.half_map_size", 50);
 
     std::vector<int64_t> temp_layer_size;
     this->get_parameter("voxel_map.resolution", se3_lio_config_.voxel_map_resolution);
@@ -70,6 +73,9 @@ LioNode::LioNode() : Node("se3_lio_node") {
     this->get_parameter("voxel_map.layer_size", temp_layer_size);
     this->get_parameter("voxel_map.max_point_size", se3_lio_config_.voxel_map_max_point_size);
     this->get_parameter("voxel_map.plane_threshold", se3_lio_config_.voxel_map_plane_thres);
+    this->get_parameter("voxel_map.map_sliding_en", se3_lio_config_.voxel_map_sliding_en);
+    this->get_parameter("voxel_map.sliding_thresh", se3_lio_config_.voxel_map_sliding_thresh);
+    this->get_parameter("voxel_map.half_map_size", se3_lio_config_.voxel_map_half_size);
 
     for (const auto &size : temp_layer_size) {
         se3_lio_config_.voxel_map_layer_size.push_back(static_cast<int>(size));

@@ -98,8 +98,52 @@ void ManageMap::updateMap() {
                       config_.max_point_size, config_.max_point_size, config_.plane_thres,
                       voxel_map_);
 
+    if (config_.map_sliding_en) {
+        mapSliding(curr_pose_.block<3, 1>(0, 3));
+    }
+
     if (config_.verbose) {
         std::cout << "Map is updated. current map size: " << voxel_map_.size() << std::endl;
+    }
+}
+
+void ManageMap::mapSliding(const Eigen::Vector3d &position) {
+    if (has_slid_ && (position - last_slide_position_).norm() < config_.sliding_thresh) {
+        return;
+    }
+    has_slid_ = true;
+    last_slide_position_ = position;
+
+    // Body voxel index, matching the keying convention in voxel_map_util.cpp.
+    int64_t loc[3];
+    for (int j = 0; j < 3; j++) {
+        double v = position[j] / config_.resolution;
+        if (v < 0) v -= 1.0;
+        loc[j] = static_cast<int64_t>(v);
+    }
+    int64_t h = config_.half_map_size;
+    clearMemOutOfMap(loc[0] + h, loc[0] - h, loc[1] + h, loc[1] - h, loc[2] + h, loc[2] - h);
+}
+
+void ManageMap::clearMemOutOfMap(int64_t x_max, int64_t x_min, int64_t y_max, int64_t y_min,
+                                 int64_t z_max, int64_t z_min) {
+    int deleted = 0;
+    for (auto it = voxel_map_.begin(); it != voxel_map_.end();) {
+        const VOXEL_LOC &loc = it->first;
+        bool out = loc.x > x_max || loc.x < x_min || loc.y > y_max || loc.y < y_min ||
+                   loc.z > z_max || loc.z < z_min;
+        if (out) {
+            delete it->second;
+            it = voxel_map_.erase(it);
+            deleted++;
+        } else {
+            ++it;
+        }
+    }
+
+    if (config_.verbose) {
+        std::cout << "[map sliding] deleted " << deleted << " voxels, map size "
+                  << voxel_map_.size() << std::endl;
     }
 }
 

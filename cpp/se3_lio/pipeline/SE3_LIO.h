@@ -35,6 +35,10 @@ struct SE3_LIO_Config {
     int voxel_map_max_point_size = 1000;
     float voxel_map_plane_thres = 0.01;
 
+    bool voxel_map_sliding_en = false;
+    double voxel_map_sliding_thresh = 8.0;
+    int voxel_map_half_size = 50;
+
     bool verbose = false;
 };
 
@@ -47,6 +51,8 @@ public:
     void estimatePoseWithGPS_v2(MeasurementPtr &_measurement_ptr);
 
     State getState() const { return state_; }
+
+    size_t getMapSize() const { return map_manager_ ? map_manager_->mapSize() : 0; }
 
 private:
     SE3_LIO_Config config_;

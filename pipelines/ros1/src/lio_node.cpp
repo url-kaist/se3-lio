@@ -32,6 +32,9 @@ LioNode::LioNode(ros::NodeHandle &nh, ros::NodeHandle &nh_private) : nh_(nh), pn
                                  {5, 5, 5, 5, 5});
     pnh_.param<int>("/voxel_map/max_point_size", se3_lio_config_.voxel_map_max_point_size, 1000);
     pnh_.param<float>("/voxel_map/plane_threshold", se3_lio_config_.voxel_map_plane_thres, 0.01f);
+    pnh_.param<bool>("/voxel_map/map_sliding_en", se3_lio_config_.voxel_map_sliding_en, false);
+    pnh_.param<double>("/voxel_map/sliding_thresh", se3_lio_config_.voxel_map_sliding_thresh, 8.0);
+    pnh_.param<int>("/voxel_map/half_map_size", se3_lio_config_.voxel_map_half_size, 50);
 
     lidar_extrinsic_.block<3, 1>(0, 3) =
         Eigen::Vector3d(lidar_extrinsic_t[0], lidar_extrinsic_t[1], lidar_extrinsic_t[2]);
@@ -141,6 +144,8 @@ void LioNode::pushAllROSMessages() {
         LiDAR lidar = convertLivoxMessage(lidar_queue_.front(), lidar_min_range_);
 #elif defined(LIDAR_HESAI)
         LiDAR lidar = convertHesaiMessage(lidar_queue_.front(), lidar_min_range_);
+#elif defined(LIDAR_VELODYNE)
+        LiDAR lidar = convertVelodyneMessage(lidar_queue_.front(), lidar_min_range_);
 #else  // LIDAR_OUSTER
         LiDAR lidar = convertOusterMessage(lidar_queue_.front(), lidar_min_range_);
 #endif

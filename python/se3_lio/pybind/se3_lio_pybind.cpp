@@ -77,6 +77,8 @@ public:
 
     Eigen::Matrix4d LastPose() { return pipeline_.getState().pose; }
 
+    size_t MapSize() const { return pipeline_.getMapSize(); }
+
 private:
     se3_lio::pipeline::SE3_LIO pipeline_;
     Eigen::Matrix4d extrinsic_;
@@ -103,6 +105,9 @@ PYBIND11_MODULE(se3_lio_pybind, m) {
         .def_readwrite("voxel_map_layer_size", &Config::voxel_map_layer_size)
         .def_readwrite("voxel_map_max_point_size", &Config::voxel_map_max_point_size)
         .def_readwrite("voxel_map_plane_thres", &Config::voxel_map_plane_thres)
+        .def_readwrite("voxel_map_sliding_en", &Config::voxel_map_sliding_en)
+        .def_readwrite("voxel_map_sliding_thresh", &Config::voxel_map_sliding_thresh)
+        .def_readwrite("voxel_map_half_size", &Config::voxel_map_half_size)
         .def_readwrite("verbose", &Config::verbose);
 
     py::class_<State>(m, "_State")
@@ -122,5 +127,6 @@ PYBIND11_MODULE(se3_lio_pybind, m) {
              "lidar_extrinsic"_a)
         .def("_register_frame", &SE3LIOWrapper::RegisterFrame, "points"_a, "point_times"_a,
              "imu"_a, "frame_stamp"_a)
-        .def("_last_pose", &SE3LIOWrapper::LastPose);
+        .def("_last_pose", &SE3LIOWrapper::LastPose)
+        .def("_map_size", &SE3LIOWrapper::MapSize);
 }

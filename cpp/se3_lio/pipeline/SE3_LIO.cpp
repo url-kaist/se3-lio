@@ -16,6 +16,9 @@ SE3_LIO::SE3_LIO(const SE3_LIO_Config &_config) : config_(_config) {
     manage_map_config.layer_size = config_.voxel_map_layer_size;
     manage_map_config.max_point_size = config_.voxel_map_max_point_size;
     manage_map_config.plane_thres = config_.voxel_map_plane_thres;
+    manage_map_config.map_sliding_en = config_.voxel_map_sliding_en;
+    manage_map_config.sliding_thresh = config_.voxel_map_sliding_thresh;
+    manage_map_config.half_map_size = config_.voxel_map_half_size;
     manage_map_config.verbose = config_.verbose;
 
     map_manager_ = std::make_shared<se3_lio::ManageMap>(manage_map_config);

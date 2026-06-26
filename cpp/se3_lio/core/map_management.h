@@ -29,6 +29,13 @@ struct ManageMapConfig {
     int max_point_size;
     float plane_thres = 0.01f;
     bool verbose = false;
+
+    // Local-map sliding window: evict root voxels outside a box of
+    // [+/- half_map_size] voxels around the body once it has moved
+    // sliding_thresh meters since the last slide. Bounds RAM on long runs.
+    bool map_sliding_en = false;
+    double sliding_thresh = 8.0;
+    int half_map_size = 50;
 };
 
 class ManageMap {
@@ -77,9 +84,23 @@ public:
      */
     std::vector<Plane> getPlanes();
 
+    /**
+     * @brief Number of root voxels currently held by the map.
+     */
+    size_t mapSize() const { return voxel_map_.size(); }
+
     std::unordered_map<VOXEL_LOC, OctoTree *> voxel_map_;
 
 private:
+    /**
+     * @brief Slide the local map: when the body has moved more than
+     * sliding_thresh since the last slide, drop voxels outside the box around
+     * its current voxel index.
+     */
+    void mapSliding(const Eigen::Vector3d &position);
+    void clearMemOutOfMap(int64_t x_max, int64_t x_min, int64_t y_max, int64_t y_min,
+                          int64_t z_max, int64_t z_min);
+
     ManageMapConfig config_;
 
     State curr_state_;
@@ -89,6 +110,9 @@ private:
     Eigen::Matrix<double, 6, 6> curr_pose_cov_;
 
     std::vector<pointWithCov> pv_list_;
+
+    Eigen::Vector3d last_slide_position_ = Eigen::Vector3d::Zero();
+    bool has_slid_ = false;
 
     bool is_initialized_;
 };

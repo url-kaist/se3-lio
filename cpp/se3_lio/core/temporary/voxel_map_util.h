@@ -169,6 +169,13 @@ public:
         plane_ptr_ = new Plane;
     }
 
+    ~OctoTree() {
+        for (int i = 0; i < 8; i++) {
+            delete leaves_[i];
+        }
+        delete plane_ptr_;
+    }
+
     // check is plane , calc plane parameters including plane covariance
     void init_plane(const std::vector<pointWithCov> &points, Plane *plane) {
         plane->plane_cov = Eigen::Matrix<double, 6, 6>::Zero();

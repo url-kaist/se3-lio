@@ -40,3 +40,7 @@ class SE3LIO:
     @property
     def last_pose(self):
         return self._odom._last_pose()
+
+    def map_size(self):
+        """Number of root voxels currently held by the map."""
+        return self._odom._map_size()
