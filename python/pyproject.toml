@@ -43,6 +43,9 @@ test = [
 viz = [
     "polyscope",
 ]
+rerun = [
+    "rerun-sdk",
+]
 
 [tool.scikit-build]
 build-dir = "build/{wheel_tag}"

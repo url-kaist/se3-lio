@@ -23,8 +23,9 @@ ______________________________________________________________________
 SE(3)-LIO ships as ROS1 and ROS2 nodes built on a shared ROS-agnostic C++ core:
 
 - `cpp/se3_lio/` — ROS-agnostic C++ core (state estimation, map management, pipeline)
-- `pipelines/ros1/` — ROS1 (Noetic, catkin) node, launch, config, rviz
-- `pipelines/ros2/` — ROS2 (Humble, ament/colcon) node, launch, config, rviz
+- `ros/ros1/` — ROS1 (Noetic, catkin) node, launch, config, rviz
+- `ros/ros2/` — ROS2 (Humble, ament/colcon) node, launch, config, rviz
+- `config/` — dataset configs (extrinsic + topics) for the Python CLI / benchmark
 - `docker/ros1/`, `docker/ros2/` — Docker setup for building and running each
 
 ______________________________________________________________________
@@ -64,8 +65,8 @@ rosbag play --clock <data.bag>
 
 `use_sim_time:=true` makes the node follow the bag clock (`rosbag play --clock`
 publishes `/clock`). For live sensors, omit it — the default is `false`.
-Configs live in [pipelines/ros1/config/ntu.yaml](pipelines/ros1/config/ntu.yaml)
-and [pipelines/ros1/config/ncd.yaml](pipelines/ros1/config/ncd.yaml);
+Configs live in [ros/ros1/config/ntu.yaml](ros/ros1/config/ntu.yaml)
+and [ros/ros1/config/ncd.yaml](ros/ros1/config/ncd.yaml);
 swap datasets by editing the `<rosparam … file=…/>` line in the launch file.
 The launch opens RViz automatically — it needs a display: launch via
 `run_docker.sh` and run `xhost +local:root` on the host.
@@ -99,7 +100,7 @@ ros2 launch se3_lio run.launch.py    # add rviz:=true for visualization
 ros2 bag play <rosbag2_dir>
 ```
 
-Config lives in [pipelines/ros2/config/params.yaml](pipelines/ros2/config/params.yaml)
+Config lives in [ros/ros2/config/params.yaml](ros/ros2/config/params.yaml)
 (edit `imu_topic` / `lidar_topic` / extrinsics for your sensor rig).
 
 `rviz:=true` opens RViz (registered cloud + trajectory). RViz needs a display:
@@ -134,7 +135,7 @@ pytest python/tests/
 ```python
 from se3_lio import SE3LIO, SE3LIOConfig, load_node_params
 
-p = load_node_params("pipelines/ros2/config/params.yaml")   # same mapping as the node
+p = load_node_params("config/ntu.yaml")   # same mapping as the node
 odom = SE3LIO(p["config"], p["extrinsic"])
 
 # points (N,3) · point_times (N,) offsets [s] · imu (M,7) [t,ax,ay,az,gx,gy,gz]
@@ -153,11 +154,11 @@ directory → ROS2/Livox, a `*.bag` file → ROS1/Ouster.
 
 ```bash
 # ROS2 / Livox
-se3_lio_pipeline <rosbag_dir> --params pipelines/ros2/config/params.yaml --max-frames 300
+se3_lio_pipeline <rosbag_dir> --config my_rig.yaml --imu-topic /livox/imu --lidar-topic /livox/lidar --max-frames 300
 # ROS1 / Ouster (e.g. NTU VIRAL)
-se3_lio_pipeline eee_01.bag --params pipelines/ros1/config/ntu.yaml --max-frames 1500
+se3_lio_pipeline eee_01.bag --config config/ntu.yaml --max-frames 1500
 # ROS1 / Ouster (e.g. Newer College Multi-Cam)
-se3_lio_pipeline MathsHard_MC.bag --params pipelines/ros1/config/ncd.yaml --max-frames 1500
+se3_lio_pipeline MathsHard_MC.bag --config config/ncd.yaml --max-frames 1500
 ```
 
 Add `--visualize` for a live [Polyscope](https://polyscope.run) viewer (current

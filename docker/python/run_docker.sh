@@ -21,5 +21,5 @@ docker run -it --rm \
 # Inside the container:
 #   mkdir -p /tmp/xdg
 #   se3_lio_pipeline /ws/data/eee_01/eee_01.bag \
-#       --params pipelines/ros1/config/ntu.yaml --input-type ros1-ouster \
+#       --params ros/ros1/config/ntu.yaml --input-type ros1-ouster \
 #       --max-frames 1500 --visualize

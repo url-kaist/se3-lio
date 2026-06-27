@@ -4,15 +4,8 @@ import argparse
 from pathlib import Path
 
 from se3_lio.config import load_node_params
-from se3_lio.datasets import RosbagDataset, Ros1BagDataset
+from se3_lio.datasets import build_dataset
 from se3_lio.pipeline import OdometryPipeline
-
-
-def _make_dataset(input_type, bag, p, max_frames):
-    args = (bag, p["imu_topic"], p["lidar_topic"], p["min_range"], max_frames)
-    if input_type == "ros1-ouster":
-        return Ros1BagDataset(*args)
-    return RosbagDataset(*args)
 
 
 def run():
@@ -22,10 +15,14 @@ def run():
     )
     ap.add_argument("bag", help="ROS2 rosbag dir (Livox) or ROS1 .bag file (Ouster)")
     ap.add_argument(
-        "--params",
-        required=True,
-        help="node config yaml (topics, extrinsic, noise, voxel map)",
+        "--config",
+        dest="config",
+        help="dataset config yaml (extrinsic; optional topics + algorithm overrides). "
+        "Unset keys fall back to the SE3LIOConfig code defaults.",
     )
+    ap.add_argument("--params", dest="config", help=argparse.SUPPRESS)  # deprecated alias
+    ap.add_argument("--imu-topic", help="override imu_topic from config")
+    ap.add_argument("--lidar-topic", help="override lidar_topic from config")
     ap.add_argument(
         "--input-type",
         choices=["auto", "ros2-livox", "ros1-ouster"],
@@ -40,20 +37,36 @@ def run():
     ap.add_argument(
         "--visualize", action="store_true", help="open a live Polyscope viewer (needs se3-lio[viz])"
     )
+    ap.add_argument("--rerun-save", help="write a Rerun .rrd recording to this path (needs se3-lio[rerun])")
+    ap.add_argument("--rerun-spawn", action="store_true", help="open the Rerun viewer live")
+    ap.add_argument(
+        "--rerun-keyframe-dist",
+        type=float,
+        default=0.0,
+        help="log the world scan only every N meters of travel (0 = every frame)",
+    )
     args = ap.parse_args()
+    if not args.config:
+        ap.error("--config is required")
 
     input_type = args.input_type
     if input_type == "auto":
         input_type = "ros1-ouster" if Path(args.bag).is_file() else "ros2-livox"
 
-    p = load_node_params(args.params)
+    p = load_node_params(args.config)
+    if args.imu_topic:
+        p["imu_topic"] = args.imu_topic
+    if args.lidar_topic:
+        p["lidar_topic"] = args.lidar_topic
     print(
         f"bag={args.bag}  input={input_type}\n"
         f"imu_topic={p['imu_topic']}  lidar_topic={p['lidar_topic']}  "
         f"min_range={p['min_range']}"
     )
 
-    dataset = _make_dataset(input_type, args.bag, p, args.max_frames)
+    dataset = build_dataset(
+        input_type, args.bag, p["imu_topic"], p["lidar_topic"], p["min_range"], args.max_frames
+    )
     print(f"synchronized {len(dataset)} frames")
 
     logger = None
@@ -61,6 +74,14 @@ def run():
         from se3_lio.viz import PolyscopeVisualizer
 
         logger = PolyscopeVisualizer(p["extrinsic"])
+    elif args.rerun_save or args.rerun_spawn:
+        from se3_lio.viz import RerunLogger
+
+        logger = RerunLogger(
+            p["extrinsic"],
+            keyframe_dist=args.rerun_keyframe_dist,
+            save_path=args.rerun_save,
+        )
 
     pipeline = OdometryPipeline(dataset, p["config"], p["extrinsic"])
     pipeline.run(progress=not args.no_progress, logger=logger)
@@ -70,11 +91,15 @@ def run():
     out_path = out_dir / f"{Path(args.bag.rstrip('/')).name}_se3lio.tum"
     pipeline.save_tum(out_path)
 
-    if logger is not None:
-        logger.hold()
-
     print(pipeline.summary())
     print(f"trajectory -> {out_path}")
+    if args.rerun_save:
+        print(f"rerun -> {args.rerun_save}")
+
+    if args.visualize and logger is not None:
+        logger.hold()
+    if args.rerun_spawn and logger is not None:
+        logger.spawn()
 
 
 if __name__ == "__main__":

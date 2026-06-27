@@ -33,7 +33,7 @@ config = SE3LIOConfig(downsample_resolution=0.5, max_iter=4, verbose=False)
 odom = SE3LIO(config, lidar_extrinsic=np.eye(4))
 
 # or load the ROS2 node's params.yaml (same mapping as lio_node.cpp):
-params = load_node_params("pipelines/ros2/config/params.yaml")
+params = load_node_params("config/ntu.yaml")
 odom = SE3LIO(params["config"], params["extrinsic"])
 
 # points:      (N, 3) float xyz in the LiDAR frame
@@ -60,13 +60,25 @@ Python equivalent of the node, offline. The input format is auto-detected:
 
 ```bash
 # ROS2 / Livox (rosbag2 directory)
-se3_lio_pipeline <rosbag_dir> --params pipelines/ros2/config/params.yaml \
+se3_lio_pipeline <rosbag_dir> --config my_rig.yaml --imu-topic /livox/imu --lidar-topic /livox/lidar \
     --max-frames 300 --output results/
 
 # ROS1 / Ouster (e.g. NTU VIRAL .bag)
-se3_lio_pipeline eee_01.bag --params pipelines/ros1/config/ntu.yaml \
+se3_lio_pipeline eee_01.bag --config config/ntu.yaml \
     --max-frames 1500 --output results/
 # -> results/<bag>_se3lio.tum  + a summary (frames, path length, final pose)
+```
+
+`--config` is a small YAML giving the LiDAR→IMU **extrinsic** (and, optionally,
+topics + algorithm overrides); keys you omit fall back to the
+[`SE3LIOConfig`](se3_lio/config.py) code defaults. The repo's `config/*.yaml`
+cover our datasets — for your own rig, write just the extrinsic and pass the
+topics on the CLI:
+
+```bash
+# my_rig.yaml -> sensors: { t_exts: [x,y,z], q_exts: [w,x,y,z] }
+se3_lio_pipeline my.bag --config my_rig.yaml \
+    --imu-topic /my/imu --lidar-topic /my/points
 ```
 
 Use `--input-type ros2-livox|ros1-ouster` to override auto-detection. It reads
@@ -80,7 +92,7 @@ from se3_lio import load_node_params
 from se3_lio.datasets import RosbagDataset
 from se3_lio.pipeline import OdometryPipeline
 
-p = load_node_params("pipelines/ros2/config/params.yaml")
+p = load_node_params("config/ntu.yaml")
 dataset = RosbagDataset(bag_dir, p["imu_topic"], p["lidar_topic"], p["min_range"])
 pipeline = OdometryPipeline(dataset, p["config"], p["extrinsic"]).run()
 pipeline.save_tum("traj.tum")
@@ -95,7 +107,7 @@ play/pause `[space]`, step `[N]`, center `[C]`, and screenshot `[S]`.
 
 ```bash
 pip install se3-lio[viz]               # adds polyscope
-se3_lio_pipeline eee_01.bag --params pipelines/ros1/config/ntu.yaml \
+se3_lio_pipeline eee_01.bag --config config/ntu.yaml \
     --max-frames 1500 --visualize
 ```
 
