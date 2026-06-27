@@ -42,6 +42,18 @@ POINT_CLOUD_REGISTER_POINT_STRUCT(HesaiPointStruct,
                                                                           intensity)(
                                       double, timestamp, timestamp)(std::uint16_t, ring, ring))
 
+struct VelodynePointStruct {
+    PCL_ADD_POINT4D;
+    float intensity;
+    std::uint16_t ring;
+    float time;
+    EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+} EIGEN_ALIGN16;
+POINT_CLOUD_REGISTER_POINT_STRUCT(VelodynePointStruct,
+                                  (float, x, x)(float, y, y)(float, z, z)(float, intensity,
+                                                                          intensity)(
+                                      std::uint16_t, ring, ring)(float, time, time))
+
 namespace se3_lio::ros1_node {
 
 inline IMU convertIMUMessage(sensor_msgs::Imu::ConstPtr _imu_msg) {
@@ -112,6 +124,41 @@ inline LiDAR convertHesaiMessage(sensor_msgs::PointCloud2::ConstPtr _lidar_msg, 
 
         point.intensity = points_hesai->points[i].intensity;
         point.timestamp = points_hesai->points[i].timestamp - lidar.header.timestamp;
+        lidar.points.push_back(point);
+    }
+
+    return lidar;
+};
+
+inline LiDAR convertVelodyneMessage(sensor_msgs::PointCloud2::ConstPtr _lidar_msg,
+                                    double _min_range) {
+    LiDAR lidar;
+    lidar.header.seq = _lidar_msg->header.seq;
+    lidar.header.frame_id = _lidar_msg->header.frame_id;
+
+    pcl::PointCloud<VelodynePointStruct>::Ptr points_velo(new pcl::PointCloud<VelodynePointStruct>);
+    pcl::fromROSMsg(*_lidar_msg, *points_velo);
+
+    // Velodyne per-point `time` is relative to the header stamp (scan end), in
+    // [-period, 0]. SE3-LIO expects header = scan start and ascending offsets
+    // >= 0, so shift by the minimum time. t0 is taken over all points (before
+    // min_range filtering) so the reference is filter-independent (binding parity).
+    double t0 = points_velo->empty() ? 0.0 : static_cast<double>(points_velo->points.front().time);
+    for (const auto &p : points_velo->points)
+        if (static_cast<double>(p.time) < t0) t0 = static_cast<double>(p.time);
+    lidar.header.timestamp = _lidar_msg->header.stamp.toSec() + t0;
+
+    for (size_t i = 0; i < points_velo->size(); i++) {
+        CustomPointType point;
+        point.x = points_velo->points[i].x;
+        point.y = points_velo->points[i].y;
+        point.z = points_velo->points[i].z;
+
+        if (point.x * point.x + point.y * point.y + point.z * point.z <= (_min_range * _min_range))
+            continue;
+
+        point.intensity = points_velo->points[i].intensity;
+        point.timestamp = static_cast<double>(points_velo->points[i].time) - t0;
         lidar.points.push_back(point);
     }
 

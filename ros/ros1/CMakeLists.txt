@@ -16,15 +16,17 @@ catkin_package()
 
 # LiDAR input type — selected at build time, no source edits:
 #   catkin build se3_lio --cmake-args -DLIDAR_TYPE=livox
-set(LIDAR_TYPE "ouster" CACHE STRING "LiDAR input type: ouster | hesai | livox")
+set(LIDAR_TYPE "ouster" CACHE STRING "LiDAR input type: ouster | hesai | livox | velodyne")
 if(LIDAR_TYPE STREQUAL "livox")
     add_compile_definitions(LIDAR_LIVOX)
 elseif(LIDAR_TYPE STREQUAL "hesai")
     add_compile_definitions(LIDAR_HESAI)
+elseif(LIDAR_TYPE STREQUAL "velodyne")
+    add_compile_definitions(LIDAR_VELODYNE)
 elseif(LIDAR_TYPE STREQUAL "ouster")
     add_compile_definitions(LIDAR_OUSTER)
 else()
-    message(FATAL_ERROR "Unknown LIDAR_TYPE '${LIDAR_TYPE}' (expected: ouster | hesai | livox)")
+    message(FATAL_ERROR "Unknown LIDAR_TYPE '${LIDAR_TYPE}' (expected: ouster | hesai | livox | velodyne)")
 endif()
 message(STATUS "SE3-LIO LiDAR input type: ${LIDAR_TYPE}")
 

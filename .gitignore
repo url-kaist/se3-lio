@@ -21,16 +21,9 @@ run_docker_local.sh
 .polyscope.ini
 imgui.ini
 
-# private benchmark data/results
-/benchmark/
-
-# python benchmark runner + its tests — kept private for now (not yet public).
-# Includes the Rerun visualization (moved under benchmark/viz/), also private.
-/python/se3_lio/benchmark/
-/python/tests/_bench_import.py
-/python/tests/test_benchmark_evaluate.py
-/python/tests/test_benchmark_search.py
-/python/tests/test_rerun_viz.py
+# private benchmark — runner + data/sweeps/results, kept private for now (not
+# yet public). Includes the Rerun visualization under python/benchmark/viz/.
+/python/benchmark/
 
 # internal verification harness (implementation-phase; private dataset paths)
 /_verify/
