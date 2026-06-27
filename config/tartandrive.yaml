@@ -28,7 +28,7 @@ voxel_map:
   max_layer: 2
   layer_size: [5, 5, 5, 5, 5]
   max_point_size: 1000
-  plane_threshold: 0.01
+  plane_threshold: 0.05  # sweep best (suite gupta0914/gupta1114/turnpikeflat): 3.57m -> 2.32m mean ATE
 
   map_sliding_en: true
   sliding_thresh: 8.0

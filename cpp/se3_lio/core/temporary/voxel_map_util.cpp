@@ -6,6 +6,15 @@
 
 #include "voxel_map_util.h"
 
+#include <cstdlib>
+
+// env SE3_LIO_OMP_THREADS overrides the MP_PROC_NUM default (benchmark sets 1
+// for deterministic single-threaded runs).
+static int se3_lio_omp_threads() {
+    const char *e = std::getenv("SE3_LIO_OMP_THREADS");
+    return (e && std::atoi(e) > 0) ? std::atoi(e) : MP_PROC_NUM;
+}
+
 void buildVoxelMap(const std::vector<pointWithCov> &input_points,
                    const float voxel_size,
                    const int max_layer,
@@ -92,7 +101,7 @@ void updateVoxelMapOMP(const std::vector<pointWithCov> &input_points,
         }
     }
     // #ifdef MP_EN
-    omp_set_num_threads(MP_PROC_NUM);
+    omp_set_num_threads(se3_lio_omp_threads());
 #pragma omp parallel for default(none) shared(position_index_map, feat_map)
     // #endif
     for (size_t b = 0; b < position_index_map.bucket_count(); b++) {
@@ -194,7 +203,7 @@ void BuildResidualListOMP(const std::unordered_map<VOXEL_LOC, OctoTree *> &voxel
     // #ifdef MP_EN
     int num_success = 0;
     // #endif
-    omp_set_num_threads(MP_PROC_NUM);
+    omp_set_num_threads(se3_lio_omp_threads());
 #pragma omp parallel for
     for (int i = 0; i < index.size(); i++) {
         pointWithCov pv = pv_list[i];
