@@ -33,4 +33,4 @@ voxel_map:
   # (in voxels) once the body has moved sliding_thresh meters. Bounds RAM.
   map_sliding_en: true
   sliding_thresh: 8.0
-  half_map_size: 50
+  half_map_size: 100

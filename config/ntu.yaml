@@ -18,7 +18,7 @@ sensors:
   q_exts: [0.99995, 0.0, 0.0, -0.00999]
 
 downsample:
-  resolution: 0.25
+  resolution: 0.5
 
 max_iter: 3
 
@@ -27,4 +27,10 @@ voxel_map:
   max_layer: 2
   layer_size: [5, 5, 5, 5, 5]
   max_point_size: 1000
-  plane_threshold: 0.01
+  plane_threshold: 0.05
+
+  # Local-map sliding window: evict voxels outside a +/- half_map_size box once
+  # the body moves sliding_thresh meters. Bounds RAM (on for consistency).
+  map_sliding_en: true
+  sliding_thresh: 8.0
+  half_map_size: 100
