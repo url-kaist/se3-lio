@@ -44,7 +44,10 @@ viz = [
     "polyscope",
 ]
 rerun = [
-    "rerun-sdk",
+    # Pinned to the .rrd format read by the local viewer. Keep this in lockstep
+    # with the viewer version (e.g. a conda env: rerun-sdk==0.33.1). 0.27+ is
+    # needed for camera-follow (Spatial3DView eye_controls.tracking_entity).
+    "rerun-sdk==0.33.1",
 ]
 
 [tool.scikit-build]

@@ -115,6 +115,33 @@ The viewer lives in [se3_lio/viz/polyscope_viz.py](se3_lio/viz/polyscope_viz.py)
 (`PolyscopeVisualizer`, lazily importing `polyscope`). It implements the pipeline
 logger interface (`log_frame`), following KISS-ICP / GenZ-ICP's Polyscope viewers.
 
+## Visualization (Rerun)
+
+`--rerun-save` writes a [Rerun](https://rerun.io) `.rrd` (open it in the viewer,
+below): a 3D view (sliding submap, trajectory, sensor pose with TF axes,
+camera-follow) plus scalar plots (linear/angular speed, compute time, CPU, RAM).
+Logger: [se3_lio/viz/rerun_logger.py](se3_lio/viz/rerun_logger.py).
+
+```bash
+pip install se3-lio[rerun]             # adds rerun-sdk (pinned, see below)
+se3_lio_pipeline eee_01.bag --config config/ntu.yaml --rerun-save out.rrd
+```
+
+**Version:** the `[rerun]` extra pins **`rerun-sdk==0.33.1`**, because `.rrd`
+files are only guaranteed to open in a **matching viewer version** and the
+logger uses version-specific APIs. Keep the viewer in lockstep — since the host
+Python may be too old for a recent SDK, use a dedicated env:
+
+```bash
+conda create -n rerun033 python=3.11 -y
+conda run -n rerun033 pip install rerun-sdk==0.33.1
+conda run -n rerun033 rerun out.rrd    # native viewer (matches the .rrd)
+```
+
+Alternatively serve the web viewer from the same SDK (`rr.serve_web_viewer`) so
+no local install has to match. When upgrading rerun, bump the pin, fix any
+logger API breaks, rebuild, and **regenerate the `.rrd`** (or `rerun rrd migrate`).
+
 ### Raw binding
 
 The `_`-prefixed names (`se3_lio_pybind._SE3LIO`, `_SE3LIOConfig`, `_State`) are

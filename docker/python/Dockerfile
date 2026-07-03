@@ -27,7 +27,7 @@ WORKDIR /ws/src/SE3-LIO
 COPY cpp/    ./cpp/
 COPY python/ ./python/
 RUN rm -rf python/build \
-    && pip install --no-cache-dir --no-build-isolation "./python/[viz]"
+    && pip install --no-cache-dir --no-build-isolation "./python/[viz,rerun]"
 
 WORKDIR /ws
 CMD ["bash"]
