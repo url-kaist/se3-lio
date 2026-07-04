@@ -4,7 +4,7 @@
     <param name="use_sim_time" value="$(arg use_sim_time)"/>
 
     <!--Load parameters from oxspires.yaml-->
-    <rosparam command="load" file="$(find se3_lio)/ros1/config/oxspires.yaml"/>
+    <rosparam command="load" file="$(find se3_lio)/../config/oxspires.yaml"/>
 
     <!--Run the lio_node-->
     <node pkg="se3_lio" type="lio_node" name="lio_node" output="screen"/>
