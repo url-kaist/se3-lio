@@ -105,5 +105,13 @@ else()
     message(FATAL_ERROR "SE3-LIO C++ core library not found. Please build the C++ core first.")
 endif()
 
+# Python (rclpy) node — thin wrapper over the pybind `se3_lio` core.
+# Run with: ros2 run se3_lio se3_lio_py_node  /  ros2 launch se3_lio run_py.launch.py
+install(PROGRAMS
+    scripts/se3_lio_node.py
+    DESTINATION lib/${PROJECT_NAME}
+    RENAME se3_lio_py_node
+)
+
 ament_package()
 

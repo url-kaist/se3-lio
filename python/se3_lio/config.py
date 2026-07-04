@@ -77,30 +77,30 @@ def load_node_params(params_path):
         raw = yaml.safe_load(f)
     # ROS2 params.yaml nests under "/**: ros__parameters:"; ROS1 yaml is flat.
     node = raw.get("/**", raw)
-    p = node.get("ros__parameters", node)
+    params = node.get("ros__parameters", node)
 
     config = SE3LIOConfig(
-        acc_noise=_get(p, "sensors.imu.acc_cov", 0.1),
-        gyr_noise=_get(p, "sensors.imu.gyr_cov", 0.1),
-        bg_noise=_get(p, "sensors.imu.b_acc_cov", 0.0001),
-        ba_noise=_get(p, "sensors.imu.b_gyr_cov", 0.0001),
-        lidar_range_noise=_get(p, "sensors.lidar.range_cov", 0.001),
-        lidar_angle_noise=_get(p, "sensors.lidar.angle_cov", 0.01),
-        downsample_resolution=_get(p, "downsample.resolution", 0.5),
-        max_iter=int(_get(p, "max_iter", 4)),
-        voxel_map_resolution=_get(p, "voxel_map.resolution", 1.0),
-        voxel_map_max_layer=int(_get(p, "voxel_map.max_layer", 2)),
-        voxel_map_layer_size=[int(x) for x in _get(p, "voxel_map.layer_size", [5, 5, 5, 5, 5])],
-        voxel_map_max_point_size=int(_get(p, "voxel_map.max_point_size", 1000)),
-        voxel_map_plane_thres=float(_get(p, "voxel_map.plane_threshold", 0.01)),
-        voxel_map_sliding_en=bool(_get(p, "voxel_map.map_sliding_en", False)),
-        voxel_map_sliding_thresh=float(_get(p, "voxel_map.sliding_thresh", 8.0)),
-        voxel_map_half_size=int(_get(p, "voxel_map.half_map_size", 50)),
-        verbose=bool(_get(p, "verbose", False)),
+        acc_noise=_get(params, "sensors.imu.acc_cov", 0.1),
+        gyr_noise=_get(params, "sensors.imu.gyr_cov", 0.1),
+        bg_noise=_get(params, "sensors.imu.b_acc_cov", 0.0001),
+        ba_noise=_get(params, "sensors.imu.b_gyr_cov", 0.0001),
+        lidar_range_noise=_get(params, "sensors.lidar.range_cov", 0.001),
+        lidar_angle_noise=_get(params, "sensors.lidar.angle_cov", 0.01),
+        downsample_resolution=_get(params, "downsample.resolution", 0.5),
+        max_iter=int(_get(params, "max_iter", 4)),
+        voxel_map_resolution=_get(params, "voxel_map.resolution", 1.0),
+        voxel_map_max_layer=int(_get(params, "voxel_map.max_layer", 2)),
+        voxel_map_layer_size=[int(x) for x in _get(params, "voxel_map.layer_size", [5, 5, 5, 5, 5])],
+        voxel_map_max_point_size=int(_get(params, "voxel_map.max_point_size", 1000)),
+        voxel_map_plane_thres=float(_get(params, "voxel_map.plane_threshold", 0.01)),
+        voxel_map_sliding_en=bool(_get(params, "voxel_map.map_sliding_en", False)),
+        voxel_map_sliding_thresh=float(_get(params, "voxel_map.sliding_thresh", 8.0)),
+        voxel_map_half_size=int(_get(params, "voxel_map.half_map_size", 50)),
+        verbose=bool(_get(params, "verbose", False)),
     )
 
-    t = _get(p, "sensors.t_exts", [0.0, 0.0, 0.0])
-    q = _get(p, "sensors.q_exts", [1.0, 0.0, 0.0, 0.0])  # [w, x, y, z]
+    t = _get(params, "sensors.t_exts", [0.0, 0.0, 0.0])
+    q = _get(params, "sensors.q_exts", [1.0, 0.0, 0.0, 0.0])  # [w, x, y, z]
     extrinsic = np.eye(4)
     extrinsic[:3, 3] = t
     extrinsic[:3, :3] = _quat_wxyz_to_rot(q)
@@ -108,7 +108,7 @@ def load_node_params(params_path):
     return {
         "config": config,
         "extrinsic": extrinsic,
-        "min_range": _get(p, "sensors.lidar.min_range", 0.1),
-        "imu_topic": _get(p, "imu_topic", "/imu/data"),
-        "lidar_topic": _get(p, "lidar_topic", "/lidar/points"),
+        "min_range": _get(params, "sensors.lidar.min_range", 0.1),
+        "imu_topic": _get(params, "imu_topic", "/imu/data"),
+        "lidar_topic": _get(params, "lidar_topic", "/lidar/points"),
     }

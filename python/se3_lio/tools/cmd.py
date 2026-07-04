@@ -4,7 +4,7 @@ import argparse
 from pathlib import Path
 
 from se3_lio.config import load_node_params
-from se3_lio.datasets import build_dataset
+from se3_lio.datasets import RosbagDataset, Ros1BagDataset
 from se3_lio.pipeline import OdometryPipeline
 
 # Rerun visualization tuning -- hardcoded, not CLI flags.
@@ -59,39 +59,38 @@ def run():
         input_type = ("ros1-ouster" if len(args.bag) > 1 or Path(args.bag[0]).is_file()
                       else "ros2-livox")
 
-    p = load_node_params(args.config)
+    params = load_node_params(args.config)
     if args.imu_topic:
-        p["imu_topic"] = args.imu_topic
+        params["imu_topic"] = args.imu_topic
     if args.lidar_topic:
-        p["lidar_topic"] = args.lidar_topic
+        params["lidar_topic"] = args.lidar_topic
     print(
         f"bag={bag}  input={input_type}\n"
-        f"imu_topic={p['imu_topic']}  lidar_topic={p['lidar_topic']}  "
-        f"min_range={p['min_range']}"
+        f"imu_topic={params['imu_topic']}  lidar_topic={params['lidar_topic']}  "
+        f"min_range={params['min_range']}"
     )
 
-    dataset = build_dataset(
-        input_type, bag, p["imu_topic"], p["lidar_topic"], p["min_range"], args.max_frames
-    )
+    ds_cls = Ros1BagDataset if input_type == "ros1-ouster" else RosbagDataset
+    dataset = ds_cls(bag, params["imu_topic"], params["lidar_topic"], params["min_range"], args.max_frames)
     print(f"synchronized {len(dataset)} frames")
 
     logger = None
     if args.visualize:
         from se3_lio.viz import PolyscopeVisualizer
 
-        logger = PolyscopeVisualizer(p["extrinsic"])
+        logger = PolyscopeVisualizer(params["extrinsic"])
     elif args.rerun_save:
         from se3_lio.viz import RerunLogger
 
         logger = RerunLogger(
-            p["extrinsic"],
+            params["extrinsic"],
             keyframe_dist=RERUN_KEYFRAME_DIST,
             save_path=args.rerun_save,
             window=RERUN_SUBMAP,
             axis_length=RERUN_AXIS_LENGTH,
         )
 
-    pipeline = OdometryPipeline(dataset, p["config"], p["extrinsic"])
+    pipeline = OdometryPipeline(dataset, params["config"], params["extrinsic"])
     pipeline.run(progress=not args.no_progress, logger=logger)
 
     out_dir = Path(args.output)

@@ -14,6 +14,8 @@ import time
 
 import numpy as np
 
+from se3_lio.viz._geometry import lidar_to_world, gravity_align
+
 
 def _rss_mb():
     """Current process resident memory in MB (Linux)."""
@@ -27,55 +29,12 @@ def _rss_mb():
     return 0.0
 
 
-def lidar_to_world(pose, extrinsic, pts):
-    """Transform LiDAR-frame points (N, 3) into the world frame.
-
-    Mirrors the binding's convention: extrinsic maps LiDAR->body, pose maps
-    body->world, so world = pose @ extrinsic @ [pt; 1].
-    """
-    pose = np.asarray(pose, dtype=float)
-    extrinsic = np.asarray(extrinsic, dtype=float)
-    pts = np.asarray(pts, dtype=float)
-    T = pose @ extrinsic
-    return pts @ T[:3, :3].T + T[:3, 3]
-
-
 def _set_time(rr, timeline, seconds):
     """Set the active time, across rerun API versions (<=0.22 vs >=0.23)."""
     if hasattr(rr, "set_time_seconds"):
         rr.set_time_seconds(timeline, seconds)
     else:
         rr.set_time(timeline, timestamp=seconds)
-
-
-def _vec_align(a, b):
-    """Rotation matrix R (3x3) with R @ a == b, for unit vectors a and b."""
-    a = np.asarray(a, dtype=float)
-    b = np.asarray(b, dtype=float)
-    v = np.cross(a, b)
-    c = float(np.dot(a, b))
-    if c > 1.0 - 1e-8:
-        return np.eye(3)
-    if c < -1.0 + 1e-8:
-        # Antiparallel (e.g. upside-down IMU): 180 deg about any axis ⊥ to a.
-        axis = np.cross(a, [1.0, 0.0, 0.0])
-        if np.linalg.norm(axis) < 1e-6:
-            axis = np.cross(a, [0.0, 1.0, 0.0])
-        axis = axis / np.linalg.norm(axis)
-        return 2.0 * np.outer(axis, axis) - np.eye(3)
-    vx = np.array([[0.0, -v[2], v[1]], [v[2], 0.0, -v[0]], [-v[1], v[0], 0.0]])
-    return np.eye(3) + vx + vx @ vx * (1.0 / (1.0 + c))
-
-
-def _gravity_align(grav):
-    """Rotation that maps the world frame so gravity points along -z (z up)."""
-    if grav is None:
-        return np.eye(3)
-    grav = np.asarray(grav, dtype=float)
-    nrm = float(np.linalg.norm(grav))
-    if nrm < 1e-9:
-        return np.eye(3)
-    return _vec_align(grav / nrm, np.array([0.0, 0.0, -1.0]))
 
 
 class RerunLogger:
@@ -161,7 +120,7 @@ class RerunLogger:
         # Fix the gravity-alignment rotation from the first frame, then apply it
         # to every pose and scan so the streamed world has gravity along -z.
         if self._R is None:
-            self._R = _gravity_align(grav)
+            self._R = gravity_align(grav)
         R = self._R
         pos = R @ pose[:3, 3]
 

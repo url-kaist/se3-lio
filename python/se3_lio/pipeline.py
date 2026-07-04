@@ -42,7 +42,7 @@ class OdometryPipeline:
             except ImportError:
                 pass
         for frame in frames:
-            state = self.odometry.register_frame(
+            state, _ = self.odometry.register_frame(
                 frame.points, frame.point_times, frame.imu, frame.stamp
             )
             self.stamps.append(state.stamp)

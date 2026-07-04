@@ -22,7 +22,7 @@ class Frame:
     stamp: float  # absolute scan start time [s]
 
 
-def _open(bag_path):
+def _open_reader(bag_path):
     import rosbag2_py
 
     storage = rosbag2_py.StorageOptions(uri=str(bag_path), storage_id="sqlite3")
@@ -42,16 +42,16 @@ def _convert_livox(msg, min_range):
     last_x = last_y = last_z = 0.0
     xs, ys, zs, offs = [], [], [], []
     for i in range(n):  # keep the first point too (mirrors the node's i=0 fix)
-        p = pts[i]
-        tag = p.tag & 0x30
+        pt = pts[i]
+        tag = pt.tag & 0x30
         if tag != 0x10 and tag != 0x00:
             continue
-        x, y, z = p.x, p.y, p.z
+        x, y, z = pt.x, pt.y, pt.z
         moved = (
             abs(x - last_x) > 1e-7 or abs(y - last_y) > 1e-7 or abs(z - last_z) > 1e-7
         )
         if moved and (x * x + y * y + z * z > min_r2):
-            offset = p.offset_time * 1e-9
+            offset = pt.offset_time * 1e-9
             if offset > 0.1:
                 continue  # skip; last_* is NOT updated (matches C++ `continue`)
             xs.append(x)
@@ -73,7 +73,7 @@ def read_streams(bag_path, imu_topic, lidar_topic, min_range, max_scans=None):
     from sensor_msgs.msg import Imu
     from livox_ros_driver2.msg import CustomMsg
 
-    reader = _open(bag_path)
+    reader = _open_reader(bag_path)
     imus = []  # rows of [t, ax, ay, az, gx, gy, gz]
     scans = []  # dicts: {header_ts, pts, offsets}
     margin = 2  # extra scans so IMU coverage past the last kept scan is present
@@ -105,28 +105,19 @@ def synchronize(imus, scans, max_frames=None):
     """Port of MeasurementSynchronizer::synchronizeIMULiDAR.
 
     Returns (scan, imu_block) frames; IMU is partitioned non-overlapping across scans.
+    The batch pass is just the online synchronizer fed everything at once, so the
+    two stay bit-for-bit equivalent (single source of the sync rule).
     """
-    frames = []
-    imu_idx = 0
-    n_imu = len(imus)
-    last_imu_time = imus[-1, 0] if n_imu else -np.inf
+    from se3_lio.online_sync import OnlineSynchronizer
+
+    sync = OnlineSynchronizer()
+    for row in imus:
+        sync.add_imu(row)
     for scan in scans:
-        if scan["offsets"].size == 0:
-            continue
-        lidar_end = scan["header_ts"] + scan["offsets"][-1]
-        if last_imu_time < lidar_end:
-            break  # not enough IMU coverage; stop (matches node waiting)
-        if imu_idx >= n_imu or imus[imu_idx, 0] >= lidar_end:
-            continue  # no IMU before scan end -> node drops this scan
-        start = imu_idx
-        while imu_idx < n_imu and imus[imu_idx, 0] < lidar_end:
-            imu_idx += 1
-        imu_block = imus[start:imu_idx]
-        if imu_block.shape[0] == 0:
-            continue
-        frames.append((scan, imu_block))
-        if max_frames and len(frames) >= max_frames:
-            break
+        sync.add_scan(scan["header_ts"], scan["pts"], scan["offsets"])
+    frames = sync.drain()
+    if max_frames:
+        frames = frames[:max_frames]
     return frames
 
 

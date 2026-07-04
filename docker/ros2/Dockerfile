@@ -26,6 +26,13 @@ RUN mkdir -p /ws/src \
 
 RUN /bin/bash -c "source /opt/ros/humble/setup.bash && cd /ws && colcon build --symlink-install --cmake-args -DROS_EDITION=ROS2 -DHUMBLE_ROS=humble"
 
+# --- Python (rclpy) node: install the released binding ---
+# ros2/scripts/se3_lio_node.py imports the compiled `se3_lio` package (cp310
+# manylinux wheel; the C++ core + OpenMP are bundled). Bump the pin + rebuild to
+# update. For local dev against unreleased code, override at runtime:
+#   pip3 install --no-build-isolation -e ./python/
+RUN pip3 install --no-cache-dir "se3-lio>=0.2"
+
 RUN echo "source /opt/ros/humble/setup.bash" >> ~/.bashrc \
     && echo "source /ws/install/setup.bash" >> ~/.bashrc \
     && echo 'alias cb="colcon build --symlink-install"' >> ~/.bashrc \

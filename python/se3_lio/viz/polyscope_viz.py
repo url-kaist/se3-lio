@@ -11,6 +11,8 @@ import importlib
 
 import numpy as np
 
+from se3_lio.viz._geometry import lidar_to_world, gravity_align
+
 START_BUTTON = " START\n[SPACE]"
 PAUSE_BUTTON = " PAUSE\n[SPACE]"
 NEXT_BUTTON = "NEXT\n [N]"
@@ -21,41 +23,6 @@ BACKGROUND_COLOR = [0.07, 0.07, 0.10]
 FRAME_COLOR = [0.85, 0.11, 0.38]
 TRAJECTORY_COLOR = [0.12, 0.53, 0.90]
 FRAME_PTS_SIZE = 0.05
-
-
-def _lidar_to_world(pose, extrinsic, pts):
-    """LiDAR-frame points (N, 3) into the world frame: world = pose @ extrinsic @ pt."""
-    T = np.asarray(pose, float) @ np.asarray(extrinsic, float)
-    return np.asarray(pts, float) @ T[:3, :3].T + T[:3, 3]
-
-
-def _vec_align(a, b):
-    """Rotation R (3x3) with R @ a == b, for unit vectors a and b."""
-    a = np.asarray(a, float)
-    b = np.asarray(b, float)
-    v = np.cross(a, b)
-    c = float(np.dot(a, b))
-    if c > 1.0 - 1e-8:
-        return np.eye(3)
-    if c < -1.0 + 1e-8:
-        axis = np.cross(a, [1.0, 0.0, 0.0])
-        if np.linalg.norm(axis) < 1e-6:
-            axis = np.cross(a, [0.0, 1.0, 0.0])
-        axis = axis / np.linalg.norm(axis)
-        return 2.0 * np.outer(axis, axis) - np.eye(3)
-    vx = np.array([[0.0, -v[2], v[1]], [v[2], 0.0, -v[0]], [-v[1], v[0], 0.0]])
-    return np.eye(3) + vx + vx @ vx * (1.0 / (1.0 + c))
-
-
-def _gravity_align(grav):
-    """Rotation mapping the world frame so gravity points along -z (z up)."""
-    if grav is None:
-        return np.eye(3)
-    grav = np.asarray(grav, float)
-    n = float(np.linalg.norm(grav))
-    if n < 1e-9:
-        return np.eye(3)
-    return _vec_align(grav / n, np.array([0.0, 0.0, -1.0]))
 
 
 class PolyscopeVisualizer:
@@ -88,9 +55,9 @@ class PolyscopeVisualizer:
     def log_frame(self, stamp, pose, scan_pts, grav=None):
         pose = np.asarray(pose, float)
         if self._R is None:
-            self._R = _gravity_align(grav)
+            self._R = gravity_align(grav)
         R = self._R
-        world = _lidar_to_world(pose, self._extrinsic, scan_pts) @ R.T
+        world = lidar_to_world(pose, self._extrinsic, scan_pts) @ R.T
         self._trajectory.append(R @ pose[:3, 3])
         self._draw(world)
 
@@ -108,17 +75,17 @@ class PolyscopeVisualizer:
 
     def _draw(self, world):
         if world.shape[0] > 0:
-            fc = self._ps.register_point_cloud(
+            cloud = self._ps.register_point_cloud(
                 "current_frame", world, color=FRAME_COLOR, point_render_mode="quad"
             )
-            fc.set_radius(self._frame_size, relative=False)
+            cloud.set_radius(self._frame_size, relative=False)
         traj = np.asarray(self._trajectory)
         if len(traj) >= 2:
             edges = np.column_stack([np.arange(len(traj) - 1), np.arange(1, len(traj))])
-            tn = self._ps.register_curve_network(
+            curve = self._ps.register_curve_network(
                 "trajectory", traj, edges, color=TRAJECTORY_COLOR
             )
-            tn.set_radius(0.04, relative=False)
+            curve.set_radius(0.04, relative=False)
 
     def _gui_callback(self):
         name = PAUSE_BUTTON if self._play else START_BUTTON

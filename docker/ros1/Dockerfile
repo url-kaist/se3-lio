@@ -28,6 +28,16 @@ RUN mkdir -p /ws/src \
 
 RUN pip uninstall netifaces -y && pip install netifaces
 
+# --- Python (rospy) node: install the released binding ---
+# ros1/scripts/se3_lio_node.py imports the compiled `se3_lio` package. Install the
+# released manylinux wheel (cp38 bundles the C++ core + OpenMP) — no cmake/build
+# toolchain needed on this old (20.04, cmake 3.16) image. Bump the pin + rebuild
+# to pull a newer release. For local dev against unreleased code, build from the
+# mounted source at runtime instead:
+#   pip3 install "pip>=21.3,<25" scikit-build-core pybind11 ninja "cmake<4"
+#   pip3 install --no-build-isolation -e ./python/     # editable = in-tree ../cpp core
+RUN pip3 install --no-cache-dir "se3-lio>=0.2"
+
 RUN source /opt/ros/noetic/setup.bash \
     && cd /ws \
     && catkin build --cmake-args -DROS_EDITION=ROS1

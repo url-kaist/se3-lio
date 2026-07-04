@@ -24,7 +24,10 @@ public:
                   const Eigen::Matrix4d &lidar_extrinsic)
         : pipeline_(config), extrinsic_(lidar_extrinsic) {}
 
-    se3_lio::State RegisterFrame(
+    // Returns (state, cloud): cloud is the deskewed scan in the body frame (the
+    // undistorted points estimatePose produced), matching the C++ node's
+    // /local/cloud_registered_body.
+    py::tuple RegisterFrame(
         const py::array_t<double, py::array::c_style | py::array::forcecast> &points,
         const py::array_t<double, py::array::c_style | py::array::forcecast> &point_times,
         const py::array_t<double, py::array::c_style | py::array::forcecast> &imu,
@@ -72,12 +75,20 @@ public:
 
         se3_lio::MeasurementPtr meas_ptr = meas;
         pipeline_.estimatePose(meas_ptr);
-        return pipeline_.getState();
+
+        // undistortCloud() overwrote meas->lidar.points in place with the
+        // deskewed (body-frame) points; return them next to the state.
+        const auto &out_pts = meas->lidar.points;
+        py::ssize_t n = static_cast<py::ssize_t>(out_pts.size());
+        py::array_t<double> cloud({n, static_cast<py::ssize_t>(3)});
+        auto c = cloud.mutable_unchecked<2>();
+        for (py::ssize_t i = 0; i < n; ++i) {
+            c(i, 0) = out_pts[i].x;
+            c(i, 1) = out_pts[i].y;
+            c(i, 2) = out_pts[i].z;
+        }
+        return py::make_tuple(pipeline_.getState(), cloud);
     }
-
-    Eigen::Matrix4d LastPose() { return pipeline_.getState().pose; }
-
-    size_t MapSize() const { return pipeline_.getMapSize(); }
 
 private:
     se3_lio::pipeline::SE3_LIO pipeline_;
@@ -126,7 +137,5 @@ PYBIND11_MODULE(se3_lio_pybind, m) {
         .def(py::init<const Config &, const Eigen::Matrix4d &>(), "config"_a,
              "lidar_extrinsic"_a)
         .def("_register_frame", &SE3LIOWrapper::RegisterFrame, "points"_a, "point_times"_a,
-             "imu"_a, "frame_stamp"_a)
-        .def("_last_pose", &SE3LIOWrapper::LastPose)
-        .def("_map_size", &SE3LIOWrapper::MapSize);
+             "imu"_a, "frame_stamp"_a);
 }

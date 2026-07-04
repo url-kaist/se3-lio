@@ -61,3 +61,10 @@ elseif (EXISTS ${SE3_LIO_CPP_DIR})
 else()
     message(FATAL_ERROR "SE3-LIO C++ core library not found. Please build the C++ core first.")
 endif()
+
+# Python (rospy) node — thin wrapper over the pybind `se3_lio` core.
+# Run with: rosrun se3_lio se3_lio_node.py  /  roslaunch se3_lio run_py.launch
+catkin_install_python(PROGRAMS
+    scripts/se3_lio_node.py
+    DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+)

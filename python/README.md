@@ -39,8 +39,8 @@ odom = SE3LIO(params["config"], params["extrinsic"])
 # points:      (N, 3) float xyz in the LiDAR frame
 # point_times: (N,)   float per-point time offset from frame start [s]
 # imu:         (M, 7) float rows of [t, ax, ay, az, gx, gy, gz]
-state = odom.register_frame(points, point_times, imu, frame_stamp)
-print(state.pose, state.vel, state.covariance)
+state, cloud = odom.register_frame(points, point_times, imu, frame_stamp)
+print(state.pose, state.vel, state.covariance)   # cloud: (N,3) deskewed, body frame
 ```
 
 `register_frame` mirrors the per-frame data path of the ROS2 node: it builds a
@@ -160,9 +160,9 @@ odom = lio._SE3LIO(config, np.eye(4))  # second arg: 4x4 LiDAR->body extrinsic
 # points:      (N, 3) float64 xyz in the LiDAR frame
 # point_times: (N,)   float64 per-point time offset from frame start [s]
 # imu:         (M, 7) float64 rows of [t, ax, ay, az, gx, gy, gz]
-state = odom._register_frame(points, point_times, imu, frame_stamp)
+state, cloud = odom._register_frame(points, point_times, imu, frame_stamp)
 
-print(state.pose)        # 4x4 SE(3) pose
+print(state.pose)        # 4x4 SE(3) pose; cloud: (N,3) deskewed body-frame points
 print(state.vel, state.bg, state.ba, state.grav)
 print(state.covariance)  # 18x18
 ```

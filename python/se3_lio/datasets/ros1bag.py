@@ -18,6 +18,16 @@ from se3_lio.datasets.rosbag import Frame, synchronize
 # sensor_msgs/PointField datatype -> numpy little-endian format
 _PF_NP = {1: "<i1", 2: "<u1", 3: "<i2", 4: "<u2", 5: "<i4", 6: "<u4", 7: "<f4", 8: "<f8"}
 
+
+def _stamp(header):
+    """Header stamp in seconds (ROS2 ``nanosec`` or ROS1 ``nsec``)."""
+    s = header.stamp
+    ns = getattr(s, "nanosec", None)
+    if ns is None:
+        ns = getattr(s, "nsec", 0)
+    return s.sec + ns * 1e-9
+
+
 def _pc2_arrays(msg, needed):
     """Structured view of a PointCloud2 over `needed` fields (zero-copy)."""
     fmt = {f.name: (f.offset, _PF_NP[f.datatype]) for f in msg.fields if f.name in needed}
@@ -75,9 +85,9 @@ def _convert_velodyne(msg, min_range):
     arr = _pc2_arrays(msg, ("x", "y", "z", "intensity", "time"))
     xyz, keep = _xyz_keep(arr, min_range)
     t = arr["time"].astype(np.float64)
-    t0 = float(t.min()) if t.size else 0.0
-    offs = t - t0
-    return xyz[keep], offs[keep], t0
+    header_shift = float(t.min()) if t.size else 0.0
+    offs = t - header_shift
+    return xyz[keep], offs[keep], header_shift
 
 
 def _convert_lidar(msg, min_range):
@@ -93,14 +103,6 @@ def _convert_lidar(msg, min_range):
     if "time" in names:
         return _convert_velodyne(msg, min_range)
     raise RuntimeError(f"no per-point time field (t/timestamp/time) in cloud: {sorted(names)}")
-
-
-def _stamp(header):
-    s = header.stamp
-    ns = getattr(s, "nanosec", None)
-    if ns is None:
-        ns = getattr(s, "nsec", 0)
-    return s.sec + ns * 1e-9
 
 
 def _as_bag_list(bag):
@@ -147,8 +149,8 @@ def read_streams(bag_path, imu_topic, lidar_topic, min_range, max_scans=None):
                     ]
                 )
             else:
-                pts, offs, t0 = _convert_lidar(m, min_range)
-                scans.append({"header_ts": _stamp(m.header) + t0, "pts": pts, "offsets": offs})
+                pts, offs, header_shift = _convert_lidar(m, min_range)
+                scans.append({"header_ts": _stamp(m.header) + header_shift, "pts": pts, "offsets": offs})
                 if max_scans and len(scans) >= max_scans + margin:
                     break
     return np.array(imus, dtype=np.float64), scans

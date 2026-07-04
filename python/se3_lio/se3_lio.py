@@ -28,7 +28,9 @@ class SE3LIO:
         point_times: (N,)   float per-point time offset from frame start [s]
         imu:         (M, 7) float rows of [t, ax, ay, az, gx, gy, gz]
         frame_stamp: float, absolute start time of the scan [s]
-        Returns the pybind _State (pose, vel, bg, ba, grav, covariance, ...).
+        Returns ``(state, cloud)``:
+          state: pybind _State (pose, vel, bg, ba, grav, covariance, ...)
+          cloud: (N, 3) deskewed scan points in the body frame (post-extrinsic).
         """
         return self._odom._register_frame(
             np.ascontiguousarray(points, dtype=float),
@@ -36,11 +38,3 @@ class SE3LIO:
             np.ascontiguousarray(imu, dtype=float),
             float(frame_stamp),
         )
-
-    @property
-    def last_pose(self):
-        return self._odom._last_pose()
-
-    def map_size(self):
-        """Number of root voxels currently held by the map."""
-        return self._odom._map_size()
