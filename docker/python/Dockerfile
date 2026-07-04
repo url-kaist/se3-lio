@@ -1,18 +1,21 @@
-# Python-only image — build & run the se3_lio Python package + CLI, no ROS.
-# Compiles the ROS-agnostic C++ core into the pybind11 wheel and installs the
-# optional Polyscope viewer ([viz]). To show the viewer, run with X11 forwarding
-# and --gpus all (see run_docker.sh).
+# Python-only image — run the se3_lio Python package + CLI (offline pipeline,
+# benchmark, Polyscope/Rerun viz). No ROS.
 #
-# Build from the REPO ROOT (context needs cpp/ and python/):
-#   docker build -f docker/python/Dockerfile -t se3_lio:py .
+# Installs the RELEASED wheel by default (C++ core + OpenMP bundled). The build
+# toolchain is kept, so to test unreleased LOCAL changes, override at runtime with
+# an editable source build:
+#   docker run -v <repo>:/ws/src/SE3-LIO ... se3_lio:py
+#   pip install --no-build-isolation -e ./python/
 #
+# Build (context = this dir, no repo files needed):  bash docker/python/build_docker.sh
 # For a CPU-only / headless image, swap the base for ubuntu:22.04 (software GL).
 FROM nvidia/cuda:11.8.0-base-ubuntu22.04
 
 ENV DEBIAN_FRONTEND=noninteractive TZ=Etc/UTC
 ENV NVIDIA_DRIVER_CAPABILITIES=all
 
-# Toolchain to compile the core (OpenMP via libgomp) + GL/X11 runtime for Polyscope.
+# GL/X11 runtime for Polyscope + a compile toolchain kept so a runtime editable
+# install (pip install -e ./python) can still build the core for local dev.
 RUN apt-get update && apt-get install -y --no-install-recommends \
       python3 python3-pip python3-dev \
       build-essential cmake git ninja-build libgomp1 \
@@ -22,12 +25,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 RUN pip install --no-cache-dir scikit-build-core pybind11 ninja
 
-# python/CMakeLists.txt compiles ../cpp/se3_lio into the wheel.
-WORKDIR /ws/src/SE3-LIO
-COPY cpp/    ./cpp/
-COPY python/ ./python/
-RUN rm -rf python/build \
-    && pip install --no-cache-dir --no-build-isolation "./python/[viz,rerun]"
+# Released wheel (C++ core bundled) + Polyscope/Rerun viewers. Bump the pin + rebuild to update.
+RUN pip install --no-cache-dir "se3-lio[viz,rerun]>=0.2"
 
 WORKDIR /ws
 CMD ["bash"]
