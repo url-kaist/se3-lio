@@ -13,6 +13,9 @@
     <a href="https://se3-lio.github.io/"><img src="https://img.shields.io/badge/Project_Page-2ea44f" /></a>
     <br />
     <br />
+    <p align="center">
+        <video src="https://github.com/url-kaist/se3-lio/raw/main/pictures/se3-lio-demo.mp4" width="640" controls muted></video>
+    </p>
     <p><strong><em>Smooth IMU propagation with jointly distributed poses on the SE(3) manifold for accurate and robust LiDAR-Inertial Odometry.</em></strong></p>
 </div>
 
