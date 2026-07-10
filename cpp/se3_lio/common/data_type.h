@@ -61,8 +61,8 @@ enum NoiseIdx {
     N_B_ACC = 9,
 };
 
-#define DOF_DIM 18
-#define ERR_DIM 18
+#define DOF_DIM 17
+#define ERR_DIM 17
 #define INPUT_DIM 12
 using ErrVector = Eigen::Matrix<double, ERR_DIM, 1>;
 using CovMatrix = Eigen::Matrix<double, ERR_DIM, ERR_DIM>;

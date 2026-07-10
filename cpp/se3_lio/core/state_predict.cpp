@@ -298,7 +298,8 @@ std::tuple<State, CovTuple> StatePredict::predictStateWithCov(State last_state,
                                 skew_sym(last_state.vel) *
                                 Sophus::SO3d::leftJacobian(angvel_hat * dt) * dt;
     F_x.block<3, 3>(VEL, B_A) = -Eigen::Matrix3d::Identity() * dt;
-    F_x.block<3, 3>(VEL, GRAV) = last_state.rot().transpose() * dt;
+    F_x.block<3, 2>(VEL, GRAV) = last_state.rot().transpose() *
+                                 S2_Mx(last_state.grav, Eigen::Vector2d::Zero()) * dt;
 
     MeasCovMatrix F_w = MeasCovMatrix::Zero();
     F_w.block<6, 3>(POSE, N_GYRO) = -rightJacobian.block<6, 3>(0, 3) * dt;
@@ -377,7 +378,7 @@ void StatePredict::undistortCloud() {
 std::vector<std::tuple<Eigen::Matrix4d, Eigen::Matrix<double, 6, 6>>>
 StatePredict::calculateRelPoseWithCov() {
     // Should be set to parameters
-    constexpr int state_dim = 18;
+    constexpr int state_dim = ERR_DIM;
     constexpr int noise_dim = 12;
     constexpr int pose_dim = 6;
 

@@ -57,7 +57,7 @@ def test_register_frame_returns_state():
 
     assert state.pose.shape == (4, 4)
     assert np.allclose(state.pose[3], [0.0, 0.0, 0.0, 1.0])
-    assert state.covariance.shape == (18, 18)
+    assert state.covariance.shape == (17, 17)  # SE3(6)+vel(3)+bg(3)+ba(3)+S2 grav(2)
     assert cloud.ndim == 2 and cloud.shape[1] == 3  # deskewed body-frame cloud
 
 

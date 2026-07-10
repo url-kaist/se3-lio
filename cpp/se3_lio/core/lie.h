@@ -2,6 +2,7 @@
 #define LIE_H
 
 #include <Eigen/Dense>
+#include <cmath>
 #include <sophus/se3.hpp>
 #include <sophus/so3.hpp>
 
@@ -37,6 +38,20 @@ ErrVector boxminus(const State &tgt_state, const State &src_state);
  * state
  */
 std::tuple<ErrVector, CovMatrix> resetErrorState(const State &src_state, const State &tgt_state);
+
+/**
+ * @brief S2 gravity manifold helpers (FAST-LIO2 / MTK S2, x-axis chart).
+ * Gravity lives on the |g| = 9.81 sphere with a 2-DOF tangent error:
+ * g boxplus d = Exp(B(g) d) g. The x-axis chart keeps the basis singularity at
+ * (-9.81, 0, 0), far from gravity (a z-axis chart would be singular at g).
+ */
+Eigen::Matrix<double, 3, 2> S2_basis(const Eigen::Vector3d &g);
+
+/** @brief d(g boxplus delta)/d(delta), 3x2 (MTK S2_Mx) */
+Eigen::Matrix<double, 3, 2> S2_Mx(const Eigen::Vector3d &g, const Eigen::Vector2d &delta);
+
+/** @brief d(y boxminus g)/dy at y = g, 2x3 (MTK S2_Nx_yy) */
+Eigen::Matrix<double, 2, 3> S2_Nx_yy(const Eigen::Vector3d &g);
 
 inline Eigen::Matrix3d skew_sym(const Eigen::Vector3d &v) {
     Eigen::Matrix3d skew;
