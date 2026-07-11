@@ -134,8 +134,13 @@ def _config_from_overrides(base_params, overrides):
         os.unlink(tmp)
 
 
-def _load_frames(entry):
-    """Parse the bag once into a materialized frame list (+ resolved params)."""
+def _load_frames(entry, stream=False):
+    """Resolve params + build the dataset (+ resolved params).
+
+    Default: materialize the frame list once so Pool workers COW-share it (bag
+    parsed once -- fast for a many-combo sweep). With ``stream=True`` return the
+    streaming dataset instead; each combo re-reads the bag, so RAM stays bounded
+    on huge bags (e.g. boeun) at the cost of re-parsing per combo."""
     from se3_lio.datasets import RosbagDataset, Ros1BagDataset
 
     params = resolve_entry(entry)
@@ -143,8 +148,9 @@ def _load_frames(entry):
     ds = ds_cls(params["bag"], params["imu_topic"], params["lidar_topic"],
                 params["min_range"], params["max_frames"])
 
-    frames = list(ds)  # ds yields Frame; materialize for COW-sharing to Pool workers
-    return frames, params
+    # A streaming dataset re-reads the bag on each __iter__, so passing the object
+    # itself lets every combo iterate it without holding all frames in memory.
+    return (ds if stream else list(ds)), params
 
 
 def _run_combo(args):
@@ -182,12 +188,13 @@ def _warmup():
     OdometryPipeline(_bag["frames"], _bag["config"], _bag["extrinsic"]).run(progress=False)
 
 
-def _run_bag(entry, bag_out_dir, tasks, jobs):
+def _run_bag(entry, bag_out_dir, tasks, jobs, stream=False):
     """Run every combo over one bag's frames, saving combo_NNNN.tum (no scoring).
 
-    The bag is parsed once in the parent and stashed in _bag; the Pool workers
-    fork and inherit the frames (Linux copy-on-write), so no combo re-parses the
-    bag (see the Pool note below on warm-up and worker recycling).
+    Default: the bag is parsed once in the parent and stashed in _bag; the Pool
+    workers fork and inherit the frames (Linux copy-on-write), so no combo
+    re-parses the bag. With ``stream=True`` _bag holds the streaming dataset
+    instead (bounded RAM for huge bags), so each combo re-reads the bag.
     """
     bag_out_dir.mkdir(parents=True, exist_ok=True)
     # Resume: skip combos already finished. The .json sidecar is written last
@@ -198,7 +205,7 @@ def _run_bag(entry, bag_out_dir, tasks, jobs):
     if not todo:
         return
     jobs = min(jobs, len(todo))  # don't spawn idle warm-up workers for done combos
-    frames, params = _load_frames(entry)
+    frames, params = _load_frames(entry, stream)
     _bag.update(frames=frames, config=params["config"], extrinsic=params["extrinsic"],
                 base_params=params["base_params"], out_dir=str(bag_out_dir))
     # Each combo runs in a forked worker (frames COW-shared from the parent, so no
@@ -233,6 +240,9 @@ def main(argv=None):
                          "basic.yaml = default grid; verify.yaml = empty grid (base params only).")
     ap.add_argument("--jobs", type=int, default=os.cpu_count(),
                     help="parallel workers")
+    ap.add_argument("--stream", action="store_true",
+                    help="stream each bag instead of materializing all frames "
+                         "(bounded RAM for huge bags; re-reads the bag per combo)")
     ap.add_argument("--out", default=None,
                     help="output dir override (default results/<target>/<topic>/)")
     ap.add_argument("--topic", default=None,
@@ -278,7 +288,7 @@ def main(argv=None):
 
     # Generate trajectories only — bags run sequentially, combos in parallel.
     for ds_key in ds_keys:
-        _run_bag(registry[ds_key], out_dir / ds_key, tasks, jobs)
+        _run_bag(registry[ds_key], out_dir / ds_key, tasks, jobs, args.stream)
         print(f"  {ds_key}: done")
 
     print(f"done -> {out_dir}\n"

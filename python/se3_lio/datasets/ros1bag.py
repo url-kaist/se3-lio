@@ -13,7 +13,8 @@ from pathlib import Path
 
 import numpy as np
 
-from se3_lio.datasets.rosbag import Frame, synchronize
+from se3_lio.datasets.rosbag import Frame
+from se3_lio.online_sync import OnlineSynchronizer
 
 # sensor_msgs/PointField datatype -> numpy little-endian format
 _PF_NP = {1: "<i1", 2: "<u1", 3: "<i2", 4: "<u2", 5: "<i4", 6: "<u4", 7: "<f4", 8: "<f8"}
@@ -122,55 +123,46 @@ def _as_bag_list(bag):
     return [Path(s)]
 
 
-def read_streams(bag_path, imu_topic, lidar_topic, min_range, max_scans=None):
+def stream_frames(bag_path, imu_topic, lidar_topic, min_range, max_frames=None):
+    """Yield synced `Frame`s one at a time in bounded memory: the bag is read one
+    message at a time (never buffered whole), and the online synchronizer drains
+    each scan as soon as it is IMU-covered -- so processed scans are dropped
+    instead of accumulating and large bags no longer OOM. The emitted frames are
+    identical to the batch `synchronize` path (both apply the same rule, pinned by
+    tests/test_online_sync.py)."""
     from rosbags.highlevel import AnyReader
 
-    imus = []
-    scans = []
-    margin = 2
+    sync = OnlineSynchronizer()
+    emitted = 0
     with AnyReader(_as_bag_list(bag_path)) as reader:
         conns = [c for c in reader.connections if c.topic in (imu_topic, lidar_topic)]
         if not conns:
-            raise RuntimeError(
-                f"topics not found in bag: imu={imu_topic} lidar={lidar_topic}"
-            )
+            raise RuntimeError(f"topics not found in bag: imu={imu_topic} lidar={lidar_topic}")
         for conn, _t, raw in reader.messages(connections=conns):
             m = reader.deserialize(raw, conn.msgtype)
             if conn.topic == imu_topic:
-                imus.append(
-                    [
-                        _stamp(m.header),
-                        m.linear_acceleration.x,
-                        m.linear_acceleration.y,
-                        m.linear_acceleration.z,
-                        m.angular_velocity.x,
-                        m.angular_velocity.y,
-                        m.angular_velocity.z,
-                    ]
-                )
+                a, w = m.linear_acceleration, m.angular_velocity
+                sync.add_imu([_stamp(m.header), a.x, a.y, a.z, w.x, w.y, w.z])
             else:
-                pts, offs, header_shift = _convert_lidar(m, min_range)
-                scans.append({"header_ts": _stamp(m.header) + header_shift, "pts": pts, "offsets": offs})
-                if max_scans and len(scans) >= max_scans + margin:
-                    break
-    return np.array(imus, dtype=np.float64), scans
+                pts, offs, shift = _convert_lidar(m, min_range)
+                sync.add_scan(_stamp(m.header) + shift, pts, offs)
+            # Drain after every message: a buffered scan is emitted as soon as an
+            # IMU covers its end (so tail scans need no separate final flush).
+            for scan, imu_block in sync.drain():
+                yield Frame(points=scan["pts"], point_times=scan["offsets"],
+                            imu=imu_block, stamp=scan["header_ts"])
+                emitted += 1
+                if max_frames and emitted >= max_frames:
+                    return
 
 
 class Ros1BagDataset:
-    """Iterable of synchronized SE(3)-LIO `Frame`s from a ROS1 (.bag) Ouster sequence."""
+    """Streaming iterable of synced SE(3)-LIO `Frame`s from a ROS1 (.bag) sequence.
+    The bag is read once per iteration, one frame at a time -- no full-bag
+    materialization, so RAM stays bounded regardless of bag size."""
 
     def __init__(self, bag_path, imu_topic, lidar_topic, min_range, max_frames=None):
-        imus, scans = read_streams(bag_path, imu_topic, lidar_topic, min_range, max_frames)
-        self._frames = synchronize(imus, scans, max_frames)
-
-    def __len__(self):
-        return len(self._frames)
+        self._args = (bag_path, imu_topic, lidar_topic, min_range, max_frames)
 
     def __iter__(self):
-        for scan, imu_block in self._frames:
-            yield Frame(
-                points=scan["pts"],
-                point_times=scan["offsets"],
-                imu=imu_block,
-                stamp=scan["header_ts"],
-            )
+        return stream_frames(*self._args)

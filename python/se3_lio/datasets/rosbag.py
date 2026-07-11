@@ -67,40 +67,6 @@ def _stamp(header):
     return header.stamp.sec + header.stamp.nanosec * 1e-9
 
 
-def read_streams(bag_path, imu_topic, lidar_topic, min_range, max_scans=None):
-    """Read until `max_scans` (+margin) LiDAR scans are collected, with all IMU seen."""
-    from rclpy.serialization import deserialize_message
-    from sensor_msgs.msg import Imu
-    from livox_ros_driver2.msg import CustomMsg
-
-    reader = _open_reader(bag_path)
-    imus = []  # rows of [t, ax, ay, az, gx, gy, gz]
-    scans = []  # dicts: {header_ts, pts, offsets}
-    margin = 2  # extra scans so IMU coverage past the last kept scan is present
-    while reader.has_next():
-        topic, data, _ = reader.read_next()
-        if topic == imu_topic:
-            m = deserialize_message(data, Imu)
-            imus.append(
-                [
-                    _stamp(m.header),
-                    m.linear_acceleration.x,
-                    m.linear_acceleration.y,
-                    m.linear_acceleration.z,
-                    m.angular_velocity.x,
-                    m.angular_velocity.y,
-                    m.angular_velocity.z,
-                ]
-            )
-        elif topic == lidar_topic:
-            m = deserialize_message(data, CustomMsg)
-            pts, offs = _convert_livox(m, min_range)
-            scans.append({"header_ts": _stamp(m.header), "pts": pts, "offsets": offs})
-            if max_scans and len(scans) >= max_scans + margin:
-                break
-    return np.array(imus, dtype=np.float64), scans
-
-
 def synchronize(imus, scans, max_frames=None):
     """Port of MeasurementSynchronizer::synchronizeIMULiDAR.
 
@@ -121,21 +87,50 @@ def synchronize(imus, scans, max_frames=None):
     return frames
 
 
+def stream_frames(bag_path, imu_topic, lidar_topic, min_range, max_frames=None):
+    """Yield synced `Frame`s one at a time in bounded memory: the bag is read one
+    message at a time (never buffered whole), and the online synchronizer drains
+    each scan as soon as it is IMU-covered -- so processed scans are dropped
+    instead of accumulating and large bags no longer OOM. The emitted frames are
+    identical to the batch `synchronize` path (both apply the same rule, pinned by
+    tests/test_online_sync.py)."""
+    from rclpy.serialization import deserialize_message
+    from sensor_msgs.msg import Imu
+    from livox_ros_driver2.msg import CustomMsg
+    from se3_lio.online_sync import OnlineSynchronizer
+
+    sync = OnlineSynchronizer()
+    emitted = 0
+    reader = _open_reader(bag_path)
+    while reader.has_next():
+        topic, data, _ = reader.read_next()
+        if topic == imu_topic:
+            m = deserialize_message(data, Imu)
+            a, w = m.linear_acceleration, m.angular_velocity
+            sync.add_imu([_stamp(m.header), a.x, a.y, a.z, w.x, w.y, w.z])
+        elif topic == lidar_topic:
+            m = deserialize_message(data, CustomMsg)
+            pts, offs = _convert_livox(m, min_range)
+            sync.add_scan(_stamp(m.header), pts, offs)
+        else:
+            continue
+        # Drain after every message: a buffered scan is emitted as soon as an IMU
+        # covers its end (so tail scans need no separate final flush).
+        for scan, imu_block in sync.drain():
+            yield Frame(points=scan["pts"], point_times=scan["offsets"],
+                        imu=imu_block, stamp=scan["header_ts"])
+            emitted += 1
+            if max_frames and emitted >= max_frames:
+                return
+
+
 class RosbagDataset:
-    """Iterable of synchronized SE(3)-LIO `Frame`s from a ROS2 rosbag."""
+    """Streaming iterable of synced SE(3)-LIO `Frame`s from a ROS2 rosbag. The bag
+    is read once per iteration, one frame at a time -- no full-bag materialization,
+    so RAM stays bounded regardless of bag size."""
 
     def __init__(self, bag_path, imu_topic, lidar_topic, min_range, max_frames=None):
-        imus, scans = read_streams(bag_path, imu_topic, lidar_topic, min_range, max_frames)
-        self._frames = synchronize(imus, scans, max_frames)
-
-    def __len__(self):
-        return len(self._frames)
+        self._args = (bag_path, imu_topic, lidar_topic, min_range, max_frames)
 
     def __iter__(self):
-        for scan, imu_block in self._frames:
-            yield Frame(
-                points=scan["pts"],
-                point_times=scan["offsets"],
-                imu=imu_block,
-                stamp=scan["header_ts"],
-            )
+        return stream_frames(*self._args)

@@ -72,7 +72,6 @@ def run():
 
     ds_cls = Ros1BagDataset if input_type == "ros1-ouster" else RosbagDataset
     dataset = ds_cls(bag, params["imu_topic"], params["lidar_topic"], params["min_range"], args.max_frames)
-    print(f"synchronized {len(dataset)} frames")
 
     logger = None
     if args.visualize:
