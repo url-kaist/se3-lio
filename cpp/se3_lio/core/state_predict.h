@@ -56,6 +56,7 @@ public:
      * @return bool
      */
     bool isValid();
+    bool isInitialized() const { return is_initialized_; }
 
     /**
      * @brief Calculate the initial gravity from the mean values of the

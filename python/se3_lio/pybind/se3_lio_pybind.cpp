@@ -90,6 +90,8 @@ public:
         return py::make_tuple(pipeline_.getState(), cloud);
     }
 
+    bool IsInitialized() const { return pipeline_.isInitialized(); }
+
 private:
     se3_lio::pipeline::SE3_LIO pipeline_;
     Eigen::Matrix4d extrinsic_;
@@ -137,5 +139,6 @@ PYBIND11_MODULE(se3_lio_pybind, m) {
         .def(py::init<const Config &, const Eigen::Matrix4d &>(), "config"_a,
              "lidar_extrinsic"_a)
         .def("_register_frame", &SE3LIOWrapper::RegisterFrame, "points"_a, "point_times"_a,
-             "imu"_a, "frame_stamp"_a);
+             "imu"_a, "frame_stamp"_a)
+        .def_property_readonly("is_initialized", &SE3LIOWrapper::IsInitialized);
 }

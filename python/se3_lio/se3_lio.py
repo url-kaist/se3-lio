@@ -38,3 +38,8 @@ class SE3LIO:
             np.ascontiguousarray(imu, dtype=float),
             float(frame_stamp),
         )
+
+    @property
+    def is_initialized(self) -> bool:
+        """IMU/gravity init done (20+ samples); before that register_frame returns the identity state."""
+        return self._odom.is_initialized
