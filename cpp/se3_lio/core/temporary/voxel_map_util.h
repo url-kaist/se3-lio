@@ -61,6 +61,18 @@ typedef struct pointWithCov {
         : point(_point), point_world(_point_world), cov(_cov), cov_lidar(_cov_lidar) {}
 } pointWithCov;
 
+// Stored map point. The octree only ever reads .point (world coords, filled by
+// transformGlobalPointsWithNoise) and .cov (plane_cov in init_plane);
+// point_world/cov_lidar of pointWithCov are never set on the map path, so
+// keeping them costs 96 B/point of dead weight.
+struct MapPoint {
+    Eigen::Vector3d point;
+    Eigen::Matrix3d cov;
+
+    MapPoint() {}
+    MapPoint(const pointWithCov &pv) : point(pv.point), cov(pv.cov) {}
+};
+
 typedef struct Plane {
     Eigen::Vector3d center;
     Eigen::Vector3d normal;
@@ -120,8 +132,8 @@ struct hash<VOXEL_LOC> {
 
 class OctoTree {
 public:
-    std::vector<pointWithCov> temp_points_;  // all points in an octo tree
-    std::vector<pointWithCov> new_points_;   // new points in an octo tree
+    std::vector<MapPoint> temp_points_;  // all points in an octo tree
+    std::vector<MapPoint> new_points_;   // new points in an octo tree
     Plane *plane_ptr_;
     int max_layer_;
     bool indoor_mode_;
@@ -177,7 +189,7 @@ public:
     }
 
     // check is plane , calc plane parameters including plane covariance
-    void init_plane(const std::vector<pointWithCov> &points, Plane *plane) {
+    void init_plane(const std::vector<MapPoint> &points, Plane *plane) {
         plane->plane_cov = Eigen::Matrix<double, 6, 6>::Zero();
         plane->covariance = Eigen::Matrix3d::Zero();
         plane->center = Eigen::Vector3d::Zero();
@@ -291,7 +303,7 @@ public:
     }
 
     // only updaye plane normal, center and radius with new points
-    void update_plane(const std::vector<pointWithCov> &points, Plane *plane) {
+    void update_plane(const std::vector<MapPoint> &points, Plane *plane) {
         Eigen::Matrix3d old_covariance = plane->covariance;
         Eigen::Vector3d old_center = plane->center;
         Eigen::Matrix3d sum_ppt =
@@ -452,12 +464,12 @@ public:
                     }
                     if (all_points_num_ >= max_cov_points_size_) {
                         update_cov_enable_ = false;
-                        std::vector<pointWithCov>().swap(temp_points_);
+                        std::vector<MapPoint>().swap(temp_points_);
                     }
                     if (all_points_num_ >= max_points_size_) {
                         update_enable_ = false;
                         plane_ptr_->update_enable = false;
-                        std::vector<pointWithCov>().swap(new_points_);
+                        std::vector<MapPoint>().swap(new_points_);
                     }
                 } else {
                     return;
@@ -465,10 +477,10 @@ public:
             } else {
                 if (layer_ < max_layer_) {
                     if (temp_points_.size() != 0) {
-                        std::vector<pointWithCov>().swap(temp_points_);
+                        std::vector<MapPoint>().swap(temp_points_);
                     }
                     if (new_points_.size() != 0) {
-                        std::vector<pointWithCov>().swap(new_points_);
+                        std::vector<MapPoint>().swap(new_points_);
                     }
 
                     int xyz[3] = {0, 0, 0};
@@ -521,13 +533,13 @@ public:
 
                         if (all_points_num_ >= max_cov_points_size_) {
                             update_cov_enable_ = false;
-                            std::vector<pointWithCov>().swap(temp_points_);
+                            std::vector<MapPoint>().swap(temp_points_);
                         }
 
                         if (all_points_num_ >= max_points_size_) {
                             update_enable_ = false;
                             plane_ptr_->update_enable = false;
-                            std::vector<pointWithCov>().swap(new_points_);
+                            std::vector<MapPoint>().swap(new_points_);
                         }
                     }
                 }
