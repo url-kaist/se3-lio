@@ -170,6 +170,7 @@ def _run_combo(args):
     dt = time.monotonic() - t0
     tum = Path(_bag["out_dir"]) / f"combo_{combo_id:04d}.tum"
     pipe.save_tum(tum)
+    pipe.save_cov(tum.with_suffix(".cov.npy"))
     # Persist RAM/time next to the TUM, the same way — so they survive an
     # interrupted run and need no end-of-run aggregation. Peak RSS (KB on Linux)
     # includes the COW-shared frames (constant across combos), so compare combos

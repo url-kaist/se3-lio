@@ -30,6 +30,7 @@ class OdometryPipeline:
         self.odometry = SE3LIO(config, extrinsic)
         self.stamps = []
         self.poses = []  # list of 4x4
+        self.pose_covs = []  # list of 6x6, error-state [t; omega] on T <- T*exp(xi)
 
     def run(self, progress=True, logger=None):
         frames = self.dataset
@@ -47,6 +48,7 @@ class OdometryPipeline:
             )
             self.stamps.append(state.stamp)
             self.poses.append(np.array(state.pose))
+            self.pose_covs.append(np.array(state.covariance)[:6, :6])
             if logger is not None:
                 logger.log_frame(state.stamp, self.poses[-1], frame.points, state.grav)
         return self
@@ -60,6 +62,9 @@ class OdometryPipeline:
                     f"{t:.9f} {p[0]:.9f} {p[1]:.9f} {p[2]:.9f} "
                     f"{q[0]:.9f} {q[1]:.9f} {q[2]:.9f} {q[3]:.9f}\n"
                 )
+
+    def save_cov(self, path):
+        np.save(path, np.asarray(self.pose_covs))
 
     def path_length(self):
         if len(self.poses) < 2:
