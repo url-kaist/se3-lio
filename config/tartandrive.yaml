@@ -10,6 +10,7 @@ sensors:
 
   lidar:
     min_range: 1.0
+    point_filter_num: 4    # keep every 4th raw point (VLP-32C @10 Hz): ~3x faster, accuracy within noise
     range_cov: 0.02
     angle_cov: 0.1
 
@@ -32,4 +33,4 @@ voxel_map:
 
   map_sliding_en: true
   sliding_thresh: 8.0
-  half_map_size: 100
+  half_map_size: 500     # +-500 m (= FAST-LIO cube_side_length 1000); 100 truncated revisited structure
